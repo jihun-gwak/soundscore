@@ -1,129 +1,73 @@
 "use client";
+
 import Link from "next/link";
-import { useState } from "react";
-import { useUserAuth } from "./_utils/auth";
+import Image from "next/image";
+import SoundScoreLogo from "../Assets/images/SoundScoreLogo.png";
 
-export default function SignInPage() {
-  const { user, emailSignIn, firebaseSignOut } = useUserAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-
-  async function handleSignIn(e) {
-    e.preventDefault();
-    try {
-      setError("");
-      await emailSignIn(email, password);
-    } catch (error) {
-      setError("Failed to sign in. Please check your credentials.");
-      console.log(error);
-    }
-  }
-
-  async function handleSignOut() {
-    try {
-      await firebaseSignOut();
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
+export default function HomePage() {
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4 sm:px-6 lg:px-8">
-      {user ? (
-        <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Welcome, {user.email}
-            </h1>
-            <div className="space-y-4">
-              <Link
-                href="week-10/shopping-list"
-                className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-300"
-              >
-                Go to shopping list
-              </Link>
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="w-full border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-3 px-4 rounded-lg transition duration-300"
-              >
-                Sign out
-              </button>
-            </div>
-          </div>
+    <div className="min-h-screen bg-[#1a1d20] text-white">
+      {/* Navigation */}
+      <nav className="flex items-center justify-between p-4">
+        <div className="flex items-center">
+          <Image src={SoundScoreLogo} alt="SoundScore Logo" width={40} height={40} className="rounded-full" />
+          <input 
+            type="search" 
+            placeholder="Search SoundScore..." 
+            className="ml-4 px-4 py-2 bg-[#2a2d30] rounded-full text-sm w-64"
+          />
         </div>
-      ) : (
-        <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900">Welcome Back</h1>
-            <p className="mt-2 text-gray-600">Sign in to your account</p>
-          </div>
+        <div className="flex items-center space-x-6">
+          <Link href="/music" className="hover:text-gray-300">Music</Link>
+          <Link href="/members" className="hover:text-gray-300">Members</Link>
+          <Link href="/lists" className="hover:text-gray-300">Lists</Link>
+          <Link href="/pro" className="text-[#0095f6] hover:text-[#0084dd]">Pro</Link>
+          <Link href="/signup" className="hover:text-gray-300">Log In</Link>
+          <Link 
+            href="/signup/signup" 
+            className="bg-[#0095f6] px-4 py-2 rounded-md hover:bg-[#0084dd] transition-colors"
+          >
+            Sign Up
+          </Link>
+        </div>
+      </nav>
 
-          {error && (
-            <div className="bg-red-50 text-red-500 p-3 rounded-lg text-center text-sm">
-              {error}
-            </div>
-          )}
+      {/* Hero Section */}
+      <main className="max-w-6xl mx-auto px-4 py-20 text-center">
+        <h1 className="text-5xl font-bold mb-6">
+          Review your favorite albums.
+          <br />
+          Discuss your favorite artists.
+          <br />
+          Share your passion for music.
+        </h1>
+        
+        <p className="text-gray-400 text-xl mb-12 max-w-3xl mx-auto">
+          SoundScore is a social platform that allows you to keep track of all the music
+          you listen to and grow your passion for music with friends. Write reviews,
+          rate albums, and compile lists in music's fastest growing community.
+        </p>
 
-          <form onSubmit={handleSignIn} className="space-y-6">
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
+        <Link 
+          href="/signup"
+          className="bg-[#0095f6] px-8 py-4 rounded-lg text-lg font-semibold hover:bg-[#0084dd] transition-colors"
+        >
+          Join SoundScore for free!
+        </Link>
 
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300"
-            >
-              Sign in
-            </button>
-          </form>
-
-          <p className="text-center text-gray-600">
-            Don't have an account?{" "}
-            <Link
-              href="/signup"
-              className="text-blue-600 hover:text-blue-800 font-semibold"
-            >
-              Sign up
+        {/* App Store Links */}
+        <div className="mt-20 text-gray-400">
+          <p className="mb-4">IMDb for music. Also available on</p>
+          <div className="flex justify-center space-x-4">
+            <Link href="#" className="opacity-75 hover:opacity-100">
+              <Image src="/apple-store.png" alt="App Store" width={24} height={24} />
             </Link>
-          </p>
+            <Link href="#" className="opacity-75 hover:opacity-100">
+              <Image src="/google-play.png" alt="Google Play" width={24} height={24} />
+            </Link>
+          </div>
         </div>
-      )}
-    </main>
+      </main>
+    </div>
   );
 }
