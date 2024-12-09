@@ -113,6 +113,7 @@ export default function HomePage() {
           </div>
         </div>
       </main>
+
     </div>
   );
 }

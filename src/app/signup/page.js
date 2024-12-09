@@ -15,7 +15,25 @@ export default function SignInPage() {
     e.preventDefault();
     try {
       setError("");
+      // First, authenticate with Firebase
       await emailSignIn(email, password);
+      
+      // Then create user record in Neon database
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          display_name: email.split('@')[0], // Using part before @ as display name
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create user record');
+      }
+
       router.push('/profile');
     } catch (error) {
       setError("Failed to sign in. Please check your credentials.");
