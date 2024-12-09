@@ -2,8 +2,10 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useUserAuth } from "../_utils/auth";
+import { useRouter } from "next/navigation";
 
 export default function SignInPage() {
+  const router = useRouter();
   const { user, emailSignIn, firebaseSignOut } = useUserAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -14,6 +16,7 @@ export default function SignInPage() {
     try {
       setError("");
       await emailSignIn(email, password);
+      router.push('/profile');
     } catch (error) {
       setError("Failed to sign in. Please check your credentials.");
       console.log(error);
@@ -23,30 +26,32 @@ export default function SignInPage() {
   async function handleSignOut() {
     try {
       await firebaseSignOut();
+      router.push('/');
     } catch (error) {
       console.log(error);
     }
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#1a1d20] flex items-center justify-center px-4 sm:px-6 lg:px-8">
       {user ? (
-        <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
+        <div className="max-w-md w-full space-y-8 bg-gray-800 p-8 rounded-xl shadow-lg">
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Welcome, {user.email}
+            <h1 className="text-3xl font-bold text-white mb-2">
+              Welcome back!
             </h1>
+            <p className="text-gray-400 mb-6">Redirecting to your profile...</p>
             <div className="space-y-4">
               <Link
-                href="week-10/shopping-list"
+                href="/profile"
                 className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-300"
               >
-                Go to shopping list
+                Go to Profile
               </Link>
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="w-full border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-3 px-4 rounded-lg transition duration-300"
+                className="w-full border border-gray-600 text-gray-300 hover:bg-gray-700 font-semibold py-3 px-4 rounded-lg transition duration-300"
               >
                 Sign out
               </button>
@@ -54,74 +59,65 @@ export default function SignInPage() {
           </div>
         </div>
       ) : (
-        <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900">Welcome Back</h1>
-            <p className="mt-2 text-gray-600">Sign in to your account</p>
+        <div className="max-w-md w-full space-y-8 bg-gray-800 p-8 rounded-xl shadow-lg">
+          <div>
+            <h2 className="text-center text-3xl font-bold text-white">Sign in to your account</h2>
+            <p className="mt-2 text-center text-sm text-gray-400">
+              Or{" "}
+              <Link href="/signup/signup" className="font-medium text-blue-500 hover:text-blue-400">
+                create a new account
+              </Link>
+            </p>
           </div>
-
-          {error && (
-            <div className="bg-red-50 text-red-500 p-3 rounded-lg text-center text-sm">
-              {error}
+          <form className="mt-8 space-y-6" onSubmit={handleSignIn}>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="email" className="sr-only">
+                  Email address
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="appearance-none relative block w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
+                  placeholder="Email address"
+                />
+              </div>
+              <div>
+                <label htmlFor="password" className="sr-only">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="appearance-none relative block w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
+                  placeholder="Password"
+                />
+              </div>
             </div>
-          )}
 
-          <form onSubmit={handleSignIn} className="space-y-6">
+            {error && (
+              <div className="text-red-500 text-sm text-center">{error}</div>
+            )}
+
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
+              <button
+                type="submit"
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300"
               >
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-              />
+                Sign in
+              </button>
             </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300"
-            >
-              Sign in
-            </button>
           </form>
-
-          <p className="text-center text-gray-600">
-            Don't have an account?{" "}
-            <Link
-              href="/signup"
-              className="text-blue-600 hover:text-blue-800 font-semibold"
-            >
-              Sign up
-            </Link>
-          </p>
         </div>
       )}
     </main>

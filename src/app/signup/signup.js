@@ -2,8 +2,10 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useUserAuth } from "../_utils/auth";
+import { useRouter } from "next/navigation";
 
 export default function SignUpPage() {
+  const router = useRouter();
   const { user, emailSignUp } = useUserAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,6 +23,7 @@ export default function SignUpPage() {
     try {
       setError("");
       await emailSignUp(email, password);
+      router.push('/profile');
     } catch (error) {
       if (error.code === "auth/email-already-in-use") {
         setError("Email already in use. Please use a different email.");
@@ -44,10 +47,10 @@ export default function SignUpPage() {
             <p className="text-gray-600 mb-6">Welcome, {user.email}</p>
             <div className="space-y-4">
               <Link
-                href="week-10/shopping-list"
+                href="/profile"
                 className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-300"
               >
-                Go to shopping list
+                Go to Profile
               </Link>
               <Link
                 href="/"
