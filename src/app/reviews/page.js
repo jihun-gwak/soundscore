@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useUserAuth } from "../_utils/auth";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { searchSongs } from "@/services/musicApi";
 
 export default function WriteReviewPage() {
   const { user } = useUserAuth();
@@ -14,24 +16,18 @@ export default function WriteReviewPage() {
   const [reviewText, setReviewText] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState("");
+  const router = useRouter();
 
-  // Function to search for tracks using Spotify API
+  // Function to search for tracks using Deezer API
   const searchTracks = async (query) => {
     if (!query.trim()) return;
-    
+
     setIsSearching(true);
     setError("");
 
     try {
-      const response = await fetch(`/api/spotify/search?q=${encodeURIComponent(query)}`);
-      const data = await response.json();
-      
-      if (data.error) {
-        setError("Failed to search for tracks. Please try again.");
-        return;
-      }
-
-      setSearchResults(data.tracks.items);
+      const results = await searchSongs(query);
+      setSearchResults(results);
     } catch (error) {
       setError("An error occurred while searching. Please try again.");
       console.error("Search error:", error);
@@ -59,7 +55,7 @@ export default function WriteReviewPage() {
 
   const handleSubmitReview = async (e) => {
     e.preventDefault();
-    
+
     if (!selectedTrack) {
       setError("Please select a track to review");
       return;
@@ -77,28 +73,24 @@ export default function WriteReviewPage() {
 
     try {
       const review = {
-        userId: user.uid,
-        trackId: selectedTrack.id,
-        trackName: selectedTrack.name,
-        artistName: selectedTrack.artists[0].name,
-        albumName: selectedTrack.album.name,
-        albumCover: selectedTrack.album.images[0]?.url,
-        rating,
-        reviewText,
-        createdAt: new Date().toISOString(),
+        user_id: parseInt(user.uid),
+        song_id: parseInt(selectedTrack.id),
+        title: null,
+        rating: rating,
+        date: new Date().toISOString().split("T")[0],
+        body: reviewText,
       };
 
-      // Send review to your backend
-      const response = await fetch('/api/reviews', {
-        method: 'POST',
+      const response = await fetch("/api/reviews", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(review),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to submit review');
+        throw new Error("Failed to submit review");
       }
 
       // Reset form
@@ -107,8 +99,8 @@ export default function WriteReviewPage() {
       setReviewText("");
       setError("");
 
-      // Redirect to profile or review success page
-      window.location.href = '/profile';
+      // Redirect to profile
+      router.push("/profile");
     } catch (error) {
       setError("Failed to submit review. Please try again.");
       console.error("Submit error:", error);
@@ -119,7 +111,9 @@ export default function WriteReviewPage() {
     return (
       <div className="min-h-screen bg-[#1a1d20] text-white flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Please sign in to write a review</h1>
+          <h1 className="text-2xl font-bold mb-4">
+            Please sign in to write a review
+          </h1>
           <Link href="/signup" className="text-blue-500 hover:text-blue-400">
             Sign In
           </Link>
@@ -132,7 +126,9 @@ export default function WriteReviewPage() {
     <div className="min-h-screen bg-[#1a1d20] text-white">
       <nav className="border-b border-gray-800 p-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <Link href="/" className="text-xl font-bold">SoundScore</Link>
+          <Link href="/" className="text-xl font-bold">
+            SoundScore
+          </Link>
         </div>
       </nav>
 
@@ -147,7 +143,7 @@ export default function WriteReviewPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search for a song, artist, or album..."
-              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400"
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg"
             />
             {isSearching && (
               <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
@@ -165,19 +161,19 @@ export default function WriteReviewPage() {
                   onClick={() => handleTrackSelect(track)}
                   className="w-full p-4 flex items-center gap-4 hover:bg-gray-700 transition-colors border-b border-gray-700 last:border-0"
                 >
-                  {track.album.images[0] && (
+                  {track.image_url && (
                     <Image
-                      src={track.album.images[0].url}
-                      alt={track.album.name}
+                      src={track.image_url}
+                      alt={track.album}
                       width={48}
                       height={48}
                       className="rounded"
                     />
                   )}
                   <div className="flex-1 text-left">
-                    <div className="font-medium">{track.name}</div>
+                    <div className="font-medium">{track.title}</div>
                     <div className="text-sm text-gray-400">
-                      {track.artists.map(a => a.name).join(", ")} • {track.album.name}
+                      {track.singers} • {track.album}
                     </div>
                   </div>
                 </button>
@@ -190,21 +186,19 @@ export default function WriteReviewPage() {
         {selectedTrack && (
           <div className="mb-8 p-6 bg-gray-800 rounded-lg">
             <div className="flex items-center gap-6">
-              {selectedTrack.album.images[0] && (
+              {selectedTrack.image_url && (
                 <Image
-                  src={selectedTrack.album.images[0].url}
-                  alt={selectedTrack.album.name}
+                  src={selectedTrack.image_url}
+                  alt={selectedTrack.album}
                   width={120}
                   height={120}
                   className="rounded"
                 />
               )}
               <div>
-                <h2 className="text-2xl font-bold">{selectedTrack.name}</h2>
-                <p className="text-gray-400">
-                  {selectedTrack.artists.map(a => a.name).join(", ")}
-                </p>
-                <p className="text-gray-400">{selectedTrack.album.name}</p>
+                <h2 className="text-2xl font-bold">{selectedTrack.title}</h2>
+                <p className="text-gray-400">{selectedTrack.singers}</p>
+                <p className="text-gray-400">{selectedTrack.album}</p>
               </div>
             </div>
           </div>
@@ -224,7 +218,9 @@ export default function WriteReviewPage() {
                   type="button"
                   onClick={() => setRating(i + 1)}
                   className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-                    rating >= i + 1 ? 'bg-yellow-500 text-gray-900' : 'bg-gray-700 text-gray-400'
+                    rating >= i + 1
+                      ? "bg-yellow-500 text-gray-900"
+                      : "bg-gray-700 text-gray-400"
                   }`}
                 >
                   {i + 1}
@@ -235,7 +231,10 @@ export default function WriteReviewPage() {
 
           {/* Review Text */}
           <div>
-            <label htmlFor="review" className="block text-sm font-medium text-gray-300 mb-2">
+            <label
+              htmlFor="review"
+              className="block text-sm font-medium text-gray-300 mb-2"
+            >
               Your Review
             </label>
             <textarea
@@ -248,9 +247,7 @@ export default function WriteReviewPage() {
             />
           </div>
 
-          {error && (
-            <div className="text-red-500 text-sm">{error}</div>
-          )}
+          {error && <div className="text-red-500 text-sm">{error}</div>}
 
           <button
             type="submit"

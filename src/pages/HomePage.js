@@ -1,10 +1,13 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useUserAuth } from "../app/_utils/auth";
+import Link from "next/link";
 
 function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
+  const { user, firebaseSignOut } = useUserAuth();
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -13,8 +16,48 @@ function HomePage() {
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      await firebaseSignOut();
+      router.push("/");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto p-5">
+      <nav className="flex justify-between items-center mb-8">
+        <Link href="/" className="text-xl font-bold">
+          SoundScore
+        </Link>
+        <div className="flex gap-4 items-center">
+          {user ? (
+            <>
+              <Link
+                href="/profile"
+                className="px-4 py-2 bg-gray-100 text-gray-800 rounded-full hover:bg-gray-200 transition-colors"
+              >
+                Profile
+              </Link>
+              <button
+                onClick={handleSignOut}
+                className="px-4 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
+              >
+                Sign Out
+              </button>
+            </>
+          ) : (
+            <Link
+              href="/login"
+              className="px-4 py-2 bg-[#1db954] text-white rounded-full hover:bg-[#1ed760] transition-colors"
+            >
+              Sign In
+            </Link>
+          )}
+        </div>
+      </nav>
+
       <header className="text-center py-24 bg-gradient-to-r from-[#1db954] to-[#191414] text-white rounded-2xl mb-10">
         <h1 className="text-5xl mb-5">Rate Your Favorite Music</h1>
         <p className="mb-6">Search, Rate, and Review Any Song</p>

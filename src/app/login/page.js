@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useUserAuth } from "../_utils/auth";
 import { useRouter } from "next/navigation";
 
@@ -17,24 +17,24 @@ export default function SignInPage() {
       setError("");
       // First, authenticate with Firebase
       await emailSignIn(email, password);
-      
+
       // Then create user record in Neon database
-      const response = await fetch('/api/users', {
-        method: 'POST',
+      const response = await fetch("/api/users", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           email: email,
-          display_name: email.split('@')[0], // Using part before @ as display name
+          display_name: email.split("@")[0], // Using part before @ as display name
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create user record');
+        throw new Error("Failed to create user record");
       }
 
-      router.push('/profile');
+      router.push("/profile");
     } catch (error) {
       setError("Failed to sign in. Please check your credentials.");
       console.log(error);
@@ -44,7 +44,7 @@ export default function SignInPage() {
   async function handleSignOut() {
     try {
       await firebaseSignOut();
-      router.push('/');
+      router.push("/");
     } catch (error) {
       console.log(error);
     }
@@ -79,10 +79,15 @@ export default function SignInPage() {
       ) : (
         <div className="max-w-md w-full space-y-8 bg-gray-800 p-8 rounded-xl shadow-lg">
           <div>
-            <h2 className="text-center text-3xl font-bold text-white">Sign in to your account</h2>
+            <h2 className="text-center text-3xl font-bold text-white">
+              Sign in to your account
+            </h2>
             <p className="mt-2 text-center text-sm text-gray-400">
               Or{" "}
-              <Link href="/signup/signup" className="font-medium text-blue-500 hover:text-blue-400">
+              <Link
+                href="/login/signup"
+                className="font-medium text-blue-500 hover:text-blue-400"
+              >
                 create a new account
               </Link>
             </p>
