@@ -1,53 +1,60 @@
 import {z} from "zod";
 import {neon} from "@neondatabase/serverless";
 
+//delete song
 export async function DELETE (request, {params}) {
     const {id} = await params;
     const idNum = Number(id);
     const dbUrl = process.env.DATABASE_URL || "";
     const sql = neon(dbUrl);
 
-    //delete user from database
-    await sql`DELETE FROM users WHERE user_id = ${idNum}`
+    //delete song from database
+    await sql`DELETE FROM songs WHERE song_id = ${idNum}`
     return new Response (null, {status:204});
 }
 
+//get single song
 export async function GET (request, {params}) {
     const {id} = await params;
     const idNum = Number(id);
     const dbUrl = process.env.DATABASE_URL || "";
     const sql = neon(dbUrl);
 
-    //get single user record
-    const response = await sql`SELECT * FROM users WHERE user_id = ${idNum}`;
+    //get single song record
+    const response = await sql`SELECT * FROM songs WHERE song_id = ${idNum}`;
 
     return new Response(JSON.stringify(response), {status:200});
 }
 
+//update song
 export async function POST (request, {params}) {
     const {id} = await params;
     const idNum = Number(id);
-    const user = await request.json();
+    const song = await request.json();
     const dbUrl = process.env.DATABASE_URL || "";
     const sql = neon(dbUrl);
 
     //validation
-    const userSchema = z.object({
-        email: z.string().min(1).max(100),
-        display_name: z.string().min(1).max(100),
+    const newSongSchema = z.object({
+        song_name: z.string().min(1).max(100),
+        artist: z.string().min(1).max(100).nullish(),
+        album: z.string().min(1).max(100).nullish(),
+        date: z.string().nullish(), //date should be a string in yyyy-mm-dd format
     })
     try {
-        userSchema.parse(user);
+        newSongSchema.parse(song);
     } catch (error) {
         return new Response(null, {status:406});
     }
 
-    //update user in database
+    //update song in database
     const response = await sql`
-    UPDATE users 
-        SET email = ${user.email}, 
-            display_name = ${user.display_name} 
-        WHERE user_id = ${idNum} 
+    UPDATE songs 
+        SET song_name = ${song.song_name}, 
+            artist = ${song.artist},
+            album = ${song.album},
+            release_date = ${song.date}
+        WHERE song_id = ${idNum} 
         RETURNING *`;
     return new Response(JSON.stringify(response), {status:200});
 }

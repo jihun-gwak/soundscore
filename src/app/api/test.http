@@ -1,7 +1,12 @@
+### get list of all users
 GET http://localhost:3000/api/users
 
-###
 
+### get single user
+GET http://localhost:3000/api/users/3
+
+
+### add user
 POST http://localhost:3000/api/users HTTP/1.1
 content-type: application/json
 
@@ -10,16 +15,134 @@ content-type: application/json
     "display_name": "example_user"
 }
 
-###
 
+### delete user
 DELETE http://localhost:3000/api/users/3
 
-###
 
+### update user
 POST http://localhost:3000/api/users/3 HTTP/1.1
 content-type: application/json
 
 {
     "email": "newemail@example.com",
     "display_name": "new_username"
+}
+
+
+### get list of all songs
+GET http://localhost:3000/api/songs
+
+
+### get single song
+GET http://localhost:3000/api/songs/1
+
+
+### add song
+POST http://localhost:3000/api/songs HTTP/1.1
+content-type: application/json
+
+{
+    "song_name": "Different Song",
+    "artist": "Different Artist"
+}
+
+
+### delete song
+DELETE http://localhost:3000/api/songs/1
+
+
+### update song
+POST http://localhost:3000/api/songs/2 HTTP/1.1
+content-type: application/json
+
+{
+    "song_name": "Test Song 2",
+    "artist": "Test Artist",
+    "album": "Test Album",
+    "date": "2024-12-08"
+}
+
+
+### get list of artists
+GET http://localhost:3000/api/songs/artist
+
+
+### get list of songs by artist (use encodeURIComponent("artist name") to convert spaces and punctuation)
+### there is no way to get list of songs without artist.
+GET http://localhost:3000/api/songs/artist/Different%20Artist
+
+
+### get list of all albums
+GET http://localhost:3000/api/songs/album
+
+
+### get list of songs in album (use encodeURIComponent("artist name") to convert spaces and punctuation)
+### there is no way to get list of songs without album.
+GET http://localhost:3000/api/songs/album/Test%20Album
+
+
+### get list of songs released between two dates
+POST http://localhost:3000/api/songs/date HTTP/1.1
+content-type: application/json
+
+{
+    "start": "2024-10-01",
+    "end": "2025-01-01"
+}
+
+
+### get list of all reviews
+GET http://localhost:3000/api/reviews
+
+
+### add review
+POST http://localhost:3000/api/reviews HTTP/1.1
+content-type: application/json
+
+{
+    "user_id": 4,
+    "song_id": 3,
+    "title": null,
+    "rating": 7,
+    "date": "2024-12-08",
+    "body": "Good."
+}
+
+
+### get all reviews by user
+GET http://localhost:3000/api/reviews/user/4
+
+
+### get all reviews of song
+GET http://localhost:3000/api/reviews/song/3
+
+
+### get list of reviews released between two dates
+POST http://localhost:3000/api/reviews/date HTTP/1.1
+content-type: application/json
+
+{
+    "start": "2024-10-01",
+    "end": "2025-01-01"
+}
+
+
+### get review by user and song id
+GET http://localhost:3000/api/reviews/user/4/song/3
+
+
+### delete review by user and song id
+DELETE http://localhost:3000/api/reviews/user/4/song/3
+
+
+### update review by user and song id
+POST http://localhost:3000/api/reviews/user/3/song/3 HTTP/1.1
+content-type: application/json
+
+{
+    "title": "Edited Review",
+    "rating": 9,
+    "date": "2024-12-09",
+    "body": "Excellent."
 }
