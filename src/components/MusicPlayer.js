@@ -55,7 +55,7 @@ export default function MusicPlayer({ initialQuery = "" }) {
       setIsLoading(true);
       setError(null);
       // Navigate to the song's review page
-      router.push(`/songs/${song.id}`);
+      router.push(`/song/${song.id}`);
     } catch (err) {
       setError(`Failed to load song details: ${err.message}`);
     } finally {

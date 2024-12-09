@@ -33,7 +33,7 @@ export async function getSongDetails(songId) {
 
   const data = await response.json();
   return {
-    url: data.preview,
+    audio_url: data.preview,
     title: data.title,
     singers: data.artist.name,
     image_url: data.album.cover_medium,
