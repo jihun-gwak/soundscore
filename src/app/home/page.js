@@ -36,14 +36,25 @@ export default function HomePage() {
             {user ? (
               <div className="flex items-center gap-4">
                 <div className="text-gray-300">
-                  <span className="font-medium">Welcome, {user.displayName || 'User'}</span>
+                  <span className="font-medium">
+                    Welcome, {user.displayName || "User"}
+                  </span>
                 </div>
                 <Link
                   href="/profile"
                   className="flex items-center gap-2 bg-[#1db954] px-6 py-3 rounded-lg text-white font-semibold hover:bg-[#1aa34a] transition-colors"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                   Profile
                 </Link>
@@ -91,9 +102,7 @@ export default function HomePage() {
 
         {/* Recent Reviews Section */}
         <section className="mb-10">
-          <h2 className="text-2xl font-bold text-white mb-5">
-            Recent Reviews
-          </h2>
+          <h2 className="text-2xl font-bold text-white mb-5">Recent Reviews</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
             {/* Review Card */}
             <div className="bg-gray-800 rounded-lg shadow p-4">
