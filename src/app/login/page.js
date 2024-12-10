@@ -18,20 +18,26 @@ export default function SignInPage() {
       // First, authenticate with Firebase
       await emailSignIn(email, password);
 
-      // Then create user record in Neon database
-      const response = await fetch("/api/users", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: email,
-          display_name: email.split("@")[0], // Using part before @ as display name
-        }),
-      });
+      // Check if user exists in database
+      const encodedEmail = encodeURIComponent(email);
+      const checkUser = await fetch(`/api/users/email/${encodedEmail}`);
+      
+      if (checkUser.status === 404) {
+        // User doesn't exist, create them
+        const createResponse = await fetch("/api/users", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: email,
+            display_name: email.split("@")[0], // Using part before @ as display name
+          }),
+        });
 
-      if (!response.ok) {
-        throw new Error("Failed to create user record");
+        if (!createResponse.ok) {
+          throw new Error("Failed to create user record");
+        }
       }
 
       router.push("/profile");

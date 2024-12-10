@@ -11,10 +11,19 @@ export default function ProfilePage() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [userProfile, setUserProfile] = useState({
+    displayName: '',
+    joinDate: '',
+    reviewCount: 0
+  });
 
   useEffect(() => {
     if (user) {
-      fetchUserReviews();
+      setUserProfile(prev => ({
+        ...prev,
+        displayName: user.displayName || user.email?.split('@')[0] || 'Music Lover',
+        joinDate: new Date(user.metadata?.creationTime).toLocaleDateString(),
+      }));
     }
   }, [user]);
 
@@ -26,15 +35,12 @@ export default function ProfilePage() {
     }
 
     try {
-      // Using the correct API endpoint for user reviews
       const response = await fetch(`/api/reviews/user/${user.uid}`);
-
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
       const data = await response.json();
-
+      
       // Process reviews with song details
       const formattedReviews = await Promise.all(
         data.map(async (review) => {
@@ -43,9 +49,10 @@ export default function ProfilePage() {
             return {
               ...review,
               song: songDetails,
-              title: review.review_title, // Match the database column names
+              title: review.review_title,
               body: review.review_body,
               date: review.review_date,
+              rating: review.rating
             };
           } catch (songError) {
             console.warn(
@@ -63,17 +70,40 @@ export default function ProfilePage() {
               title: review.review_title,
               body: review.review_body,
               date: review.review_date,
+              rating: review.rating
             };
           }
         })
       );
 
       setReviews(formattedReviews);
+      setUserProfile(prev => ({
+        ...prev,
+        reviewCount: formattedReviews.length
+      }));
     } catch (error) {
       console.error("Error fetching reviews:", error);
       setError("Failed to load reviews. Please try again later.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchUserReviews();
+    }
+  }, [user]);
+
+  const formatDate = (dateString) => {
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (e) {
+      return dateString;
     }
   };
 
@@ -84,7 +114,7 @@ export default function ProfilePage() {
           <h1 className="text-2xl font-bold mb-4">
             Please sign in to view your profile
           </h1>
-          <Link href="/signup" className="text-blue-500 hover:text-blue-400">
+          <Link href="/login/signup" className="text-[#1db954] hover:text-[#1aa34a]">
             Sign In
           </Link>
         </div>
@@ -103,7 +133,13 @@ export default function ProfilePage() {
       </nav>
 
       <main className="max-w-4xl mx-auto p-4">
-        <h1 className="text-3xl font-bold mb-8">Your Reviews</h1>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">{userProfile.displayName}'s Profile</h1>
+          <p className="text-gray-400">Member since {userProfile.joinDate}</p>
+          <p className="text-gray-400">{userProfile.reviewCount} reviews written</p>
+        </div>
+
+        <h2 className="text-2xl font-bold mb-6">Your Reviews</h2>
 
         {loading ? (
           <div className="flex justify-center items-center h-48">
@@ -112,21 +148,22 @@ export default function ProfilePage() {
         ) : error ? (
           <div className="text-center text-red-500 p-4">{error}</div>
         ) : reviews.length === 0 ? (
-          <div className="text-center text-gray-400 p-4">
-            No reviews yet.
+          <div className="bg-gray-800 rounded-lg p-8 text-center">
+            <h3 className="text-xl font-semibold mb-4">No Reviews Yet</h3>
+            <p className="text-gray-400 mb-6">Start sharing your thoughts on your favorite music!</p>
             <Link
-              href="/reviews"
-              className="text-blue-500 hover:text-blue-400 ml-2"
+              href="/search"
+              className="inline-block bg-[#1db954] px-6 py-3 rounded-lg text-white font-semibold hover:bg-[#1aa34a] transition-colors"
             >
-              Write your first review
+              Find Songs to Review
             </Link>
           </div>
         ) : (
           <div className="space-y-6">
             {reviews.map((review) => (
-              <div key={review.song_id} className="bg-gray-800 p-6 rounded-lg">
+              <div key={review.id} className="bg-gray-800 p-6 rounded-lg">
                 <div className="flex items-center gap-4">
-                  {review.song.image_url && (
+                  {review.song?.image_url && (
                     <Image
                       src={review.song.image_url}
                       alt={review.song.title}
@@ -136,8 +173,8 @@ export default function ProfilePage() {
                     />
                   )}
                   <div>
-                    <h2 className="text-xl font-bold">{review.song.title}</h2>
-                    <p className="text-gray-400">{review.song.singers}</p>
+                    <h3 className="text-xl font-bold">{review.song?.title}</h3>
+                    <p className="text-gray-400">{review.song?.singers}</p>
                   </div>
                 </div>
                 <div className="mt-4">
@@ -147,13 +184,11 @@ export default function ProfilePage() {
                     </span>
                     <span className="text-gray-400">•</span>
                     <span className="text-gray-400">
-                      {new Date(review.date).toLocaleDateString()}
+                      {formatDate(review.date)}
                     </span>
                   </div>
                   {review.title && (
-                    <h3 className="text-lg font-semibold mb-2">
-                      {review.title}
-                    </h3>
+                    <h4 className="text-lg font-semibold mb-2">{review.title}</h4>
                   )}
                   <p className="text-gray-300">{review.body}</p>
                 </div>

@@ -33,26 +33,32 @@ function HomePage() {
         </Link>
         <div className="flex gap-4 items-center">
           {user ? (
-            <>
+            <div className="flex items-center gap-4">
+              <div className="text-gray-800">
+                <span className="font-medium">Welcome, {user.displayName || 'User'}</span>
+              </div>
               <Link
                 href="/profile"
-                className="px-4 py-2 bg-gray-100 text-gray-800 rounded-full hover:bg-gray-200 transition-colors"
+                className="flex items-center gap-2 bg-[#0095f6] px-6 py-3 rounded-lg text-white font-semibold hover:bg-[#0084dd] transition-colors"
               >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                </svg>
                 Profile
               </Link>
               <button
                 onClick={handleSignOut}
-                className="px-4 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
+                className="px-4 py-3 text-gray-600 hover:text-gray-800 transition-colors"
               >
                 Sign Out
               </button>
-            </>
+            </div>
           ) : (
             <Link
-              href="/login"
-              className="px-4 py-2 bg-[#1db954] text-white rounded-full hover:bg-[#1ed760] transition-colors"
+              href="/login/signup"
+              className="bg-[#0095f6] px-8 py-4 rounded-lg text-lg font-semibold hover:bg-[#0084dd] transition-colors"
             >
-              Sign In
+              Join SoundScore for free!
             </Link>
           )}
         </div>

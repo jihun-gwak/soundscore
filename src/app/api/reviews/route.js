@@ -18,7 +18,7 @@ export async function POST(request) {
     //validation
     const newReviewSchema = z.object({
         user_id: z.number().int(),
-        song_id: z.number().int(),
+        song_id: z.string(), 
         title: z.string().min(0).max(100).nullish(),
         rating: z.number().int().min(0).max(10),
         date: z.string(), //date should be a string in yyyy-mm-dd format
