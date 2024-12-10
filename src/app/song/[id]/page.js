@@ -95,16 +95,8 @@ export default function SongDetails() {
       });
 
       if (!response.ok) {
-        let errorMessage = "Failed to submit review";
-        try {
-          const errorData = await response.json();
-          if (errorData.error) {
-            errorMessage = errorData.error;
-          }
-        } catch (jsonError) {
-          console.error("Error parsing error response:", jsonError);
-        }
-        throw new Error(errorMessage);
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to save review");
       }
 
       // Refresh reviews after successful submission
@@ -293,7 +285,7 @@ export default function SongDetails() {
                   </div>
                   <p className="text-gray-300">{review.review_body}</p>
                   <div className="mt-2 text-sm text-gray-500">
-                    By {review.user_id} •{" "}
+                    By
                     {new Date(review.review_date).toLocaleDateString()}
                   </div>
                 </div>

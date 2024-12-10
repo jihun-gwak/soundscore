@@ -17,38 +17,21 @@ export async function POST(request) {
     const body = await request.json();
     console.log("Received request body:", body);
 
-    const review = reviewSchema.parse(body);
-
-    await sql`
-      INSERT INTO songs (song_id, song_name)
-      VALUES (${review.song_id}::text::bigint, 'Unknown Song')
-      ON CONFLICT (song_id) DO NOTHING
-    `;
-
+    // Remove title field and use the correct column names
     const result = await sql`
       INSERT INTO reviews (user_id, song_id, rating, review_date, review_body)
-      VALUES (
-        ${review.user_id}, 
-        ${review.song_id}::text::bigint,
-        ${review.rating}, 
-        ${review.date}, 
-        ${review.body}
-      )
-      RETURNING *
+      VALUES (${body.user_id}, ${body.song_id}, ${body.rating}, ${body.date}, ${body.body})
+      ON CONFLICT (user_id, song_id) 
+      DO UPDATE SET 
+        rating = ${body.rating},
+        review_date = ${body.date},
+        review_body = ${body.body}
+      RETURNING *;
     `;
 
-    return new Response(JSON.stringify(result[0]), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return Response.json({ message: "Review saved successfully" });
   } catch (error) {
-    console.error("Error creating review:", error);
-    return new Response(
-      JSON.stringify({
-        error: "Failed to create review",
-        details: error.message,
-      }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    console.error("Error saving review:", error);
+    return Response.json({ error: "Failed to save review" }, { status: 500 });
   }
 }
