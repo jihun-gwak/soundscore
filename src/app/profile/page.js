@@ -160,22 +160,18 @@ export default function ProfilePage() {
         ) : error ? (
           <div className="text-center text-red-500 p-4">{error}</div>
         ) : reviews.length === 0 ? (
-          <div className="bg-gray-800 rounded-lg p-8 text-center">
-            <h3 className="text-xl font-semibold mb-4">No Reviews Yet</h3>
-            <p className="text-gray-400 mb-6">
-              Start sharing your thoughts on your favorite music!
+          <div className="text-center py-8">
+            <p className="text-gray-400">
+              You haven't written any reviews yet.
             </p>
-            <Link
-              href="/home"
-              className="inline-block bg-[#1db954] px-6 py-3 rounded-lg text-white font-semibold hover:bg-[#1aa34a] transition-colors"
-            >
-              Find Songs to Review
-            </Link>
           </div>
         ) : (
           <div className="space-y-6">
             {reviews.map((review) => (
-              <div key={review.id} className="bg-gray-800 p-6 rounded-lg">
+              <div
+                key={`${review.user_id}-${review.song_id}`}
+                className="bg-gray-800 p-6 rounded-lg"
+              >
                 <div className="flex items-center gap-4">
                   {review.song?.image_url && (
                     <Image

@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { searchSongs } from "@/services/musicApi";
 
 export default function WriteReviewPage() {
-  const { user } = useUserAuth();
+  const { user, dbUser } = useUserAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [selectedTrack, setSelectedTrack] = useState(null);
@@ -18,6 +18,8 @@ export default function WriteReviewPage() {
   const [error, setError] = useState("");
   const [isFormExpanded, setIsFormExpanded] = useState(false);
   const router = useRouter();
+  const [userReviews, setUserReviews] = useState([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(true);
 
   // Function to search for tracks using Deezer API
   const searchTracks = async (query) => {
@@ -25,7 +27,6 @@ export default function WriteReviewPage() {
 
     setIsSearching(true);
     setError("");
-
 
     try {
       const results = await searchSongs(query);
@@ -74,13 +75,18 @@ export default function WriteReviewPage() {
     }
 
     try {
-      const review = {
+      const reviewData = {
         user_id: parseInt(user.uid),
-        song_id: parseInt(selectedTrack.id),
+        song_id: selectedTrack.id.toString(),
         title: null,
         rating: rating,
         date: new Date().toISOString().split("T")[0],
         body: reviewText,
+        // Add song details
+        song_title: selectedTrack.title,
+        artist_name: selectedTrack.artist?.name || null,
+        album_title: selectedTrack.album?.title || null,
+        album_cover: selectedTrack.album?.cover || null,
       };
 
       const response = await fetch("/api/reviews", {
@@ -88,11 +94,13 @@ export default function WriteReviewPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(review),
+        body: JSON.stringify(reviewData),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to submit review");
+        const errorData = await response.json();
+        console.error("Server response error:", errorData);
+        throw new Error(errorData.error || "Failed to submit review");
       }
 
       // Reset form
@@ -110,6 +118,50 @@ export default function WriteReviewPage() {
     }
   };
 
+  // Add useEffect to fetch user's reviews
+  useEffect(() => {
+    const fetchUserReviews = async () => {
+      if (!dbUser?.user_id) return;
+
+      try {
+        const response = await fetch(`/api/reviews/user/${dbUser.user_id}`);
+        if (!response.ok) throw new Error("Failed to fetch reviews");
+        const data = await response.json();
+        setUserReviews(data);
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+      } finally {
+        setIsLoadingReviews(false);
+      }
+    };
+
+    fetchUserReviews();
+  }, [dbUser?.user_id]);
+
+  // Add delete review handler
+  const handleDeleteReview = async (songId) => {
+    if (!dbUser?.user_id) return;
+
+    try {
+      const response = await fetch(
+        `/api/reviews/user/${dbUser.user_id}/song/${songId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to delete review");
+
+      // Update reviews list after deletion
+      setUserReviews((reviews) =>
+        reviews.filter((review) => review.song_id !== songId)
+      );
+    } catch (error) {
+      console.error("Error deleting review:", error);
+      setError("Failed to delete review");
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-[#121212] text-white flex items-center justify-center">
@@ -117,7 +169,10 @@ export default function WriteReviewPage() {
           <h1 className="text-2xl font-bold mb-4">
             Please sign in to write a review
           </h1>
-          <Link href="/login/signup" className="text-[#1db954] hover:text-[#1aa34a]">
+          <Link
+            href="/login/signup"
+            className="text-[#1db954] hover:text-[#1aa34a]"
+          >
             Sign In
           </Link>
         </div>
@@ -143,8 +198,17 @@ export default function WriteReviewPage() {
               onClick={() => setIsFormExpanded(true)}
               className="bg-[#1db954] px-6 py-3 rounded-lg text-white font-semibold hover:bg-[#1aa34a] transition-colors flex items-center gap-2"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                  clipRule="evenodd"
+                />
               </svg>
               Write a Review
             </button>
@@ -160,8 +224,19 @@ export default function WriteReviewPage() {
                 onClick={() => setIsFormExpanded(false)}
                 className="text-gray-400 hover:text-white transition-colors"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -206,7 +281,9 @@ export default function WriteReviewPage() {
                       )}
                       <div>
                         <div className="font-medium">{track.title}</div>
-                        <div className="text-sm text-gray-400">{track.artist?.name}</div>
+                        <div className="text-sm text-gray-400">
+                          {track.artist?.name}
+                        </div>
                       </div>
                     </button>
                   ))}
@@ -228,14 +305,25 @@ export default function WriteReviewPage() {
                 )}
                 <div>
                   <div className="font-medium">{selectedTrack.title}</div>
-                  <div className="text-sm text-gray-400">{selectedTrack.artist?.name}</div>
+                  <div className="text-sm text-gray-400">
+                    {selectedTrack.artist?.name}
+                  </div>
                 </div>
                 <button
                   onClick={() => setSelectedTrack(null)}
                   className="ml-auto text-gray-400 hover:text-white"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </button>
               </div>
@@ -276,9 +364,7 @@ export default function WriteReviewPage() {
               />
             </div>
 
-            {error && (
-              <div className="mb-6 text-red-500 text-sm">{error}</div>
-            )}
+            {error && <div className="mb-6 text-red-500 text-sm">{error}</div>}
 
             <div className="flex justify-end gap-4">
               <button
@@ -297,7 +383,63 @@ export default function WriteReviewPage() {
           </div>
         )}
 
-        {/* Reviews List will go here */}
+        {/* Add Reviews List Section */}
+        <div className="max-w-3xl mx-auto px-4 mt-8">
+          <h2 className="text-2xl font-bold mb-6">Your Reviews</h2>
+
+          {isLoadingReviews ? (
+            <div className="flex justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+            </div>
+          ) : userReviews.length === 0 ? (
+            <p className="text-gray-400 text-center">
+              You haven't written any reviews yet.
+            </p>
+          ) : (
+            <div className="space-y-6">
+              {userReviews.map((review) => (
+                <div
+                  key={review.review_id}
+                  className="bg-gray-800 rounded-lg p-6"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-xl font-semibold mb-2">
+                        Song ID: {review.song_id}
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <div className="bg-[#1db954] px-2 py-1 rounded text-sm">
+                          {review.rating}/10
+                        </div>
+                        <span className="text-gray-400 text-sm">
+                          {new Date(review.review_date).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteReview(review.song_id)}
+                      className="text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                  <p className="text-gray-300">{review.review_body}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );

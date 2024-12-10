@@ -37,7 +37,7 @@ export default function SongDetails() {
       try {
         const response = await fetch(`/api/reviews/song/${id}`);
         if (!response.ok) {
-          throw new Error('Failed to fetch reviews');
+          throw new Error("Failed to fetch reviews");
         }
         const data = await response.json();
         setReviews(data);
@@ -63,8 +63,8 @@ export default function SongDetails() {
       return;
     }
 
-    if (!rating) {
-      setError("Please select a rating");
+    if (rating < 0 || rating > 10) {
+      setError("Please select a rating between 0 and 10");
       return;
     }
 
@@ -78,38 +78,43 @@ export default function SongDetails() {
 
     try {
       const reviewData = {
-        user_id: dbUser.user_id,
+        user_id: parseInt(dbUser.user_id),
         song_id: id,
-        title: "",
+        title: null,
         rating: rating,
-        date: new Date().toISOString().split('T')[0],
-        body: comment
+        date: new Date().toISOString().split("T")[0],
+        body: comment,
       };
 
-      console.log("Submitting review:", reviewData);
-
-      const response = await fetch('/api/reviews', {
-        method: 'POST',
+      const response = await fetch("/api/reviews", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(reviewData),
       });
 
       if (!response.ok) {
-        const errorData = await response.text();
-        console.error("Server response:", errorData);
-        throw new Error(errorData || 'Failed to submit review');
+        let errorMessage = "Failed to submit review";
+        try {
+          const errorData = await response.json();
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch (jsonError) {
+          console.error("Error parsing error response:", jsonError);
+        }
+        throw new Error(errorMessage);
       }
 
-      // Refresh reviews
+      // Refresh reviews after successful submission
       const reviewsResponse = await fetch(`/api/reviews/song/${id}`);
       if (!reviewsResponse.ok) {
-        throw new Error('Failed to fetch updated reviews');
+        throw new Error("Failed to fetch updated reviews");
       }
       const newReviews = await reviewsResponse.json();
       setReviews(newReviews);
-      
+
       // Reset form
       setComment("");
       setRating(0);
@@ -117,7 +122,9 @@ export default function SongDetails() {
       setError("");
     } catch (error) {
       console.error("Error submitting review:", error);
-      setError(error.message || "Failed to submit review. Please try again.");
+      setError(
+        error.message || "An unexpected error occurred. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -162,7 +169,9 @@ export default function SongDetails() {
                     controls
                     className="w-full focus:outline-none"
                     preload="auto"
-                    onError={(e) => console.error("Audio error:", e.target.error)}
+                    onError={(e) =>
+                      console.error("Audio error:", e.target.error)
+                    }
                   >
                     <source src={song.audioUrl} type="audio/mpeg" />
                     Your browser does not support the audio element.
@@ -208,21 +217,29 @@ export default function SongDetails() {
             <form onSubmit={handleSubmitReview} className="space-y-6 mb-8">
               <div>
                 <label className="block mb-3 text-lg font-medium text-gray-300">
-                  Rating
+                  Rating (0-10)
                 </label>
-                <div className="flex gap-3">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setRating(star)}
-                      className={`text-3xl transition-colors duration-200 hover:scale-110 ${
-                        star <= rating ? "text-yellow-400" : "text-gray-600"
-                      }`}
-                    >
-                      ★
-                    </button>
-                  ))}
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 h-3 bg-gray-700 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#1db954] transition-all duration-200"
+                        style={{ width: `${(rating / 10) * 100}%` }}
+                      />
+                    </div>
+                    <span className="text-2xl font-bold text-white min-w-[3rem] text-center">
+                      {rating}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="10"
+                    step="1"
+                    value={rating}
+                    onChange={(e) => setRating(Number(e.target.value))}
+                    className="w-full accent-[#1db954] cursor-pointer"
+                  />
                 </div>
               </div>
               <div>
@@ -256,25 +273,29 @@ export default function SongDetails() {
               </p>
             ) : (
               reviews.map((review) => (
-                <div key={review.review_id} className="pt-6 first:pt-0">
-                  <div className="flex items-center gap-2 mb-3">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <span
-                        key={star}
-                        className={`text-2xl ${
-                          star <= review.rating
-                            ? "text-yellow-400"
-                            : "text-gray-600"
-                        }`}
-                      >
-                        ★
+                <div
+                  key={`${review.user_id}-${review.song_id}`}
+                  className="pt-6"
+                >
+                  <div className="flex items-center mb-2">
+                    <span className="text-gray-400 mr-2">Rating:</span>
+                    <div className="flex items-center">
+                      <div className="flex-1 max-w-[200px] h-2 bg-gray-700 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[#1db954]"
+                          style={{ width: `${(review.rating / 10) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-lg font-bold text-white">
+                        {review.rating}/10
                       </span>
-                    ))}
+                    </div>
                   </div>
-                  <p className="text-gray-300 text-lg">{review.review_body}</p>
-                  <p className="text-sm text-gray-400 mt-3 font-medium">
-                    By {review.user_id} • {new Date(review.review_date).toLocaleDateString()}
-                  </p>
+                  <p className="text-gray-300">{review.review_body}</p>
+                  <div className="mt-2 text-sm text-gray-500">
+                    By {review.user_id} •{" "}
+                    {new Date(review.review_date).toLocaleDateString()}
+                  </div>
                 </div>
               ))
             )}

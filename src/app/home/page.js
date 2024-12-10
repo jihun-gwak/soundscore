@@ -37,7 +37,8 @@ export default function HomePage() {
               <div className="flex items-center gap-4">
                 <div className="text-gray-300">
                   <span className="font-medium">
-                    Welcome, {user.displayName || "User"}
+                    Welcome,{" "}
+                    {user.displayName || user.email?.split("@")[0] || "User"}
                   </span>
                 </div>
                 <Link
