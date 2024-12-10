@@ -7,7 +7,7 @@ import Link from "next/link";
 function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
-  const { user, firebaseSignOut } = useUserAuth();
+  const { user, dbUser, firebaseSignOut } = useUserAuth();
 
   const handleSearch = (e) => {
     e.preventDefault();

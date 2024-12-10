@@ -66,9 +66,6 @@ export const AuthContextProvider = ({ children }) => {
     emailSignUp,
     firebaseSignOut,
   };
-  if (!user) {
-    return <div>Loading...</div>;
-  }
 
   return (
     <AuthContext.Provider value={value}>
@@ -78,5 +75,9 @@ export const AuthContextProvider = ({ children }) => {
 };
 
 export const useUserAuth = () => {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useUserAuth must be used within an AuthContextProvider");
+  }
+  return context;
 };
