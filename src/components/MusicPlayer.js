@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getSongDetails, searchSongs } from "../services/musicApi";
+import { searchSongs } from "../services/musicApi";
 import { useRouter } from "next/navigation";
 
 export default function MusicPlayer({ initialQuery = "" }) {

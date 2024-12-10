@@ -195,7 +195,12 @@ export default function SongDetails() {
                 {isFormVisible ? "Cancel Review" : "Write a Review"}
               </button>
             ) : (
-              <p className="text-gray-400">Sign in to write a review</p>
+              <Link
+                href="/login/signup"
+                className="text-[#1db954] hover:text-[#1aa34a]"
+              >
+                Sign up
+              </Link>
             )}
           </div>
 
@@ -285,7 +290,7 @@ export default function SongDetails() {
                   </div>
                   <p className="text-gray-300">{review.review_body}</p>
                   <div className="mt-2 text-sm text-gray-500">
-                    By
+                    By {review.user_id} •{" "}
                     {new Date(review.review_date).toLocaleDateString()}
                   </div>
                 </div>

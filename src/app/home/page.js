@@ -77,56 +77,29 @@ export default function HomePage() {
           </div>
         </nav>
 
-        <header className="text-center py-24 bg-gradient-to-r from-[#1db954] to-[#191414] text-white rounded-2xl mb-10">
-          <h1 className="text-5xl mb-5">Rate Your Favorite Music</h1>
-          <p className="mb-6">Search, Rate, and Review Any Song</p>
+        <header className="text-center py-32 bg-gradient-to-r from-[#1db954] to-[#191414] text-white rounded-2xl mb-10">
+          <h1 className="text-6xl font-bold mb-6">Rate Your Favorite Music</h1>
+          <p className="text-xl mb-8">Search, Rate, and Review Any Song</p>
 
           {/* Search Bar */}
-          <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
-            <div className="flex gap-2">
+          <form onSubmit={handleSearch} className="max-w-3xl mx-auto">
+            <div className="flex gap-3">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search for a song..."
-                className="flex-1 px-4 py-3 rounded-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1db954]"
+                className="flex-1 px-6 py-4 rounded-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1db954] text-lg"
               />
               <button
                 type="submit"
-                className="px-8 py-3 bg-[#1db954] text-white rounded-full hover:bg-[#1aa34a] transition-colors"
+                className="px-10 py-4 bg-[#1db954] text-white rounded-full hover:bg-[#1aa34a] transition-colors text-lg font-semibold"
               >
                 Search
               </button>
             </div>
           </form>
         </header>
-
-        {/* Recent Reviews Section */}
-        <section className="mb-10">
-          <h2 className="text-2xl font-bold text-white mb-5">Recent Reviews</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-            {/* Review Card */}
-            <div className="bg-gray-800 rounded-lg shadow p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-12 h-12 bg-gray-700 rounded-md"></div>
-                <div>
-                  <h3 className="font-semibold text-white">Song Name</h3>
-                  <p className="text-sm text-gray-400">Artist Name</p>
-                </div>
-              </div>
-              <div className="flex items-center mb-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <span key={star} className="text-yellow-400">
-                    ★
-                  </span>
-                ))}
-              </div>
-              <p className="text-sm text-gray-300">
-                Great song! Love the beats...
-              </p>
-            </div>
-          </div>
-        </section>
       </div>
     </div>
   );
