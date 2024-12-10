@@ -1,4 +1,3 @@
-import {z} from "zod";
 import {neon} from "@neondatabase/serverless";
 
 //get all songs by artist

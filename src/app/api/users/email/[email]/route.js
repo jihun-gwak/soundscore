@@ -1,7 +1,7 @@
 import {neon} from "@neondatabase/serverless";
 
 export async function GET(request, {params}) {
-    const {email} = params;
+    const {email} = await params;
     const dbUrl = process.env.DATABASE_URL || "";
     const sql = neon(dbUrl);
 

@@ -35,7 +35,9 @@ export default function ProfilePage() {
     }
 
     try {
-      const response = await fetch(`/api/reviews/user/${user.uid}`);
+      const neonUser = await fetch (`/api/users/email/${encodeURIComponent(user.email)}`)
+      const neonUserData = await neonUser.json();
+      const response = await fetch(`/api/reviews/user/${neonUserData.user_id}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
