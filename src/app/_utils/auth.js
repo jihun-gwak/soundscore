@@ -14,7 +14,6 @@ const AuthContext = createContext();
 export const AuthContextProvider = ({ children }) => {
   const [user, setUser] = useState();
   const [dbUser, setDbUser] = useState();
-  const [loading, setLoading] = useState(true);
 
   async function fetchDbUser(email) {
     try {
@@ -54,7 +53,6 @@ export const AuthContextProvider = ({ children }) => {
       } else {
         setDbUser(null);
       }
-      setLoading(false);
     });
     return unsubscribe;
   }, []);
@@ -67,11 +65,7 @@ export const AuthContextProvider = ({ children }) => {
     firebaseSignOut,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useUserAuth = () => {
