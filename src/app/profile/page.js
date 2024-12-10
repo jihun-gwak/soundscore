@@ -12,16 +12,17 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [userProfile, setUserProfile] = useState({
-    displayName: '',
-    joinDate: '',
-    reviewCount: 0
+    displayName: "",
+    joinDate: "",
+    reviewCount: 0,
   });
 
   useEffect(() => {
     if (user) {
-      setUserProfile(prev => ({
+      setUserProfile((prev) => ({
         ...prev,
-        displayName: user.displayName || user.email?.split('@')[0] || 'Music Lover',
+        displayName:
+          user.displayName || user.email?.split("@")[0] || "Music Lover",
         joinDate: new Date(user.metadata?.creationTime).toLocaleDateString(),
       }));
     }
@@ -35,14 +36,16 @@ export default function ProfilePage() {
     }
 
     try {
-      const neonUser = await fetch (`/api/users/email/${encodeURIComponent(user.email)}`)
+      const neonUser = await fetch(
+        `/api/users/email/${encodeURIComponent(user.email)}`
+      );
       const neonUserData = await neonUser.json();
       const response = await fetch(`/api/reviews/user/${neonUserData.user_id}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      
+
       // Process reviews with song details
       const formattedReviews = await Promise.all(
         data.map(async (review) => {
@@ -54,7 +57,7 @@ export default function ProfilePage() {
               title: review.review_title,
               body: review.review_body,
               date: review.review_date,
-              rating: review.rating
+              rating: review.rating,
             };
           } catch (songError) {
             console.warn(
@@ -72,16 +75,16 @@ export default function ProfilePage() {
               title: review.review_title,
               body: review.review_body,
               date: review.review_date,
-              rating: review.rating
+              rating: review.rating,
             };
           }
         })
       );
 
       setReviews(formattedReviews);
-      setUserProfile(prev => ({
+      setUserProfile((prev) => ({
         ...prev,
-        reviewCount: formattedReviews.length
+        reviewCount: formattedReviews.length,
       }));
     } catch (error) {
       console.error("Error fetching reviews:", error);
@@ -99,10 +102,10 @@ export default function ProfilePage() {
 
   const formatDate = (dateString) => {
     try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+      return new Date(dateString).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       });
     } catch (e) {
       return dateString;
@@ -116,7 +119,10 @@ export default function ProfilePage() {
           <h1 className="text-2xl font-bold mb-4">
             Please sign in to view your profile
           </h1>
-          <Link href="/login/signup" className="text-[#1db954] hover:text-[#1aa34a]">
+          <Link
+            href="/login/signup"
+            className="text-[#1db954] hover:text-[#1aa34a]"
+          >
             Sign In
           </Link>
         </div>
@@ -136,9 +142,13 @@ export default function ProfilePage() {
 
       <main className="max-w-4xl mx-auto p-4">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">{userProfile.displayName}'s Profile</h1>
+          <h1 className="text-3xl font-bold mb-2">
+            {userProfile.displayName}'s Profile
+          </h1>
           <p className="text-gray-400">Member since {userProfile.joinDate}</p>
-          <p className="text-gray-400">{userProfile.reviewCount} reviews written</p>
+          <p className="text-gray-400">
+            {userProfile.reviewCount} reviews written
+          </p>
         </div>
 
         <h2 className="text-2xl font-bold mb-6">Your Reviews</h2>
@@ -152,9 +162,11 @@ export default function ProfilePage() {
         ) : reviews.length === 0 ? (
           <div className="bg-gray-800 rounded-lg p-8 text-center">
             <h3 className="text-xl font-semibold mb-4">No Reviews Yet</h3>
-            <p className="text-gray-400 mb-6">Start sharing your thoughts on your favorite music!</p>
+            <p className="text-gray-400 mb-6">
+              Start sharing your thoughts on your favorite music!
+            </p>
             <Link
-              href="/search"
+              href="/home"
               className="inline-block bg-[#1db954] px-6 py-3 rounded-lg text-white font-semibold hover:bg-[#1aa34a] transition-colors"
             >
               Find Songs to Review
@@ -190,7 +202,9 @@ export default function ProfilePage() {
                     </span>
                   </div>
                   {review.title && (
-                    <h4 className="text-lg font-semibold mb-2">{review.title}</h4>
+                    <h4 className="text-lg font-semibold mb-2">
+                      {review.title}
+                    </h4>
                   )}
                   <p className="text-gray-300">{review.body}</p>
                 </div>
