@@ -12,8 +12,8 @@ import { auth } from "./firebase";
 const AuthContext = createContext();
 
 export const AuthContextProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [dbUser, setDbUser] = useState(null);
+  const [user, setUser] = useState();
+  const [dbUser, setDbUser] = useState();
   const [loading, setLoading] = useState(true);
 
   async function fetchDbUser(email) {
@@ -66,6 +66,9 @@ export const AuthContextProvider = ({ children }) => {
     emailSignUp,
     firebaseSignOut,
   };
+  if (!user) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <AuthContext.Provider value={value}>
