@@ -1,6 +1,7 @@
 {
   "name": "soundscore",
   "version": "0.1.0",
+  "description": "Music discovery and review app — search songs, rate 0–10, and write reviews",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",

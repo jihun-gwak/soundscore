@@ -7,7 +7,7 @@ GET http://localhost:3000/api/users/3
 
 
 ### get single user by email
-GET http://localhost:3000/api/users/email/zi.liang@edu.sait.ca
+GET http://localhost:3000/api/users/email/user@example.com
 
 
 ### add user
