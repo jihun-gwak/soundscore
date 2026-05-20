@@ -1,79 +1,74 @@
-import { z } from "zod";
 import { neon } from "@neondatabase/serverless";
-import { getSongDetails } from "@/services/musicApi";
+import { getSongDetailsServer } from "@/services/musicApiServer";
+import { getBearerToken, verifyFirebaseToken } from "@/app/_utils/verifyAuth";
 
 export async function POST(request) {
   const dbUrl = process.env.DATABASE_URL || "";
+  if (!dbUrl) {
+    return Response.json({ error: "Database not configured" }, { status: 500 });
+  }
+
+  const token = getBearerToken(request);
+  const authUser = await verifyFirebaseToken(token);
+  if (!authUser) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const sql = neon(dbUrl);
 
   try {
     const body = await request.json();
-    console.log("Received request body:", body);
+    const { song_id, title, rating, date, body: reviewBody } = body;
 
-    // First check if song exists
+    if (rating < 0 || rating > 10 || !reviewBody?.trim()) {
+      return Response.json({ error: "Invalid review data" }, { status: 400 });
+    }
+
+    const dbUsers = await sql`
+      SELECT user_id FROM users WHERE email = ${authUser.email}
+    `;
+    if (dbUsers.length === 0) {
+      return Response.json({ error: "User not found" }, { status: 404 });
+    }
+    const user_id = dbUsers[0].user_id;
+
     const songExists = await sql`
-      SELECT song_id FROM songs WHERE song_id = ${body.song_id}
+      SELECT song_id FROM songs WHERE song_id = ${song_id}
     `;
 
     if (songExists.length === 0) {
-      // Fetch song details from Deezer API
-      const songDetails = await getSongDetails(body.song_id);
-
-      // Insert the song with details from the API
+      const songDetails = await getSongDetailsServer(song_id);
       await sql`
-        INSERT INTO songs (
-          song_id, 
-          song_name, 
-          artist, 
-          album
-        ) 
-        VALUES (
-          ${body.song_id}, 
-          ${songDetails.title}, 
-          ${songDetails.singers}, 
-          ${songDetails.album}
-        )
+        INSERT INTO songs (song_id, song_name, artist, album)
+        VALUES (${song_id}, ${songDetails.title}, ${songDetails.singers}, ${songDetails.album})
       `;
     }
 
-    // Check if review already exists
     const existingReview = await sql`
-      SELECT * FROM reviews 
-      WHERE user_id = ${body.user_id} AND song_id = ${body.song_id}
+      SELECT * FROM reviews
+      WHERE user_id = ${user_id} AND song_id = ${song_id}
     `;
 
     let result;
     if (existingReview.length > 0) {
-      // Update existing review
       result = await sql`
-        UPDATE reviews 
-        SET 
-          review_title = ${body.title},
-          rating = ${body.rating},
-          review_date = ${body.date},
-          review_body = ${body.body}
-        WHERE user_id = ${body.user_id} AND song_id = ${body.song_id}
+        UPDATE reviews
+        SET
+          review_title = ${title},
+          rating = ${rating},
+          review_date = ${date},
+          review_body = ${reviewBody}
+        WHERE user_id = ${user_id} AND song_id = ${song_id}
         RETURNING *
       `;
     } else {
-      // Create new review
       result = await sql`
         INSERT INTO reviews (
-          user_id, 
-          song_id, 
-          review_title, 
-          rating, 
-          review_date, 
-          review_body
-        ) 
+          user_id, song_id, review_title, rating, review_date, review_body
+        )
         VALUES (
-          ${body.user_id}, 
-          ${body.song_id}, 
-          ${body.title}, 
-          ${body.rating}, 
-          ${body.date}, 
-          ${body.body}
-        ) 
+          ${user_id}, ${song_id}, ${title}, ${rating}, ${date}, ${reviewBody}
+        )
         RETURNING *
       `;
     }

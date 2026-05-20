@@ -1,20 +1,31 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { getSongDetails } from "@/services/musicApi";
 import Link from "next/link";
 import { useUserAuth } from "@/app/_utils/auth";
+import Navbar from "@/components/Navbar";
 
 export default function SongDetails() {
   const { id } = useParams();
   const [song, setSong] = useState(null);
-  const [rating, setRating] = useState(0);
+  const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [reviews, setReviews] = useState([]);
+  const [averageRating, setAverageRating] = useState(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const { user, dbUser } = useUserAuth();
+  const { user, dbUser, getIdToken } = useUserAuth();
+
+  const fetchReviews = async () => {
+    const response = await fetch(`/api/reviews/song/${id}`);
+    if (!response.ok) throw new Error("Failed to fetch reviews");
+    const data = await response.json();
+    setReviews(data.reviews ?? []);
+    setAverageRating(data.averageRating);
+  };
 
   useEffect(() => {
     const fetchSongDetails = async () => {
@@ -27,39 +38,23 @@ export default function SongDetails() {
           album: songData.album,
           audioUrl: songData.audio_url,
         });
-      } catch (error) {
-        console.error("Error fetching song details:", error);
+      } catch (err) {
+        console.error("Error fetching song details:", err);
         setError("Failed to load song details");
       }
     };
 
-    const fetchReviews = async () => {
-      try {
-        const response = await fetch(`/api/reviews/song/${id}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch reviews");
-        }
-        const data = await response.json();
-        setReviews(data);
-      } catch (error) {
-        console.error("Error fetching reviews:", error);
-        setError("Failed to load reviews");
-      }
-    };
-
     fetchSongDetails();
-    fetchReviews();
+    fetchReviews().catch((err) => {
+      console.error("Error fetching reviews:", err);
+      setError("Failed to load reviews");
+    });
   }, [id]);
 
   const handleSubmitReview = async (e) => {
     e.preventDefault();
     if (!user || !dbUser) {
       setError("Please sign in to write a review");
-      return;
-    }
-
-    if (!dbUser.user_id) {
-      setError("Unable to submit review. Please try signing in again.");
       return;
     }
 
@@ -77,21 +72,24 @@ export default function SongDetails() {
     setError("");
 
     try {
-      const reviewData = {
-        user_id: parseInt(dbUser.user_id),
-        song_id: id,
-        title: null,
-        rating: rating,
-        date: new Date().toISOString().split("T")[0],
-        body: comment,
-      };
+      const token = await getIdToken();
+      if (!token) {
+        throw new Error("Session expired. Please sign in again.");
+      }
 
       const response = await fetch("/api/reviews", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(reviewData),
+        body: JSON.stringify({
+          song_id: Number(id),
+          title: null,
+          rating,
+          date: new Date().toISOString().split("T")[0],
+          body: comment,
+        }),
       });
 
       if (!response.ok) {
@@ -99,205 +97,185 @@ export default function SongDetails() {
         throw new Error(errorData.error || "Failed to save review");
       }
 
-      // Refresh reviews after successful submission
-      const reviewsResponse = await fetch(`/api/reviews/song/${id}`);
-      if (!reviewsResponse.ok) {
-        throw new Error("Failed to fetch updated reviews");
-      }
-      const newReviews = await reviewsResponse.json();
-      setReviews(newReviews);
-
-      // Reset form
+      await fetchReviews();
       setComment("");
-      setRating(0);
+      setRating(5);
       setIsFormVisible(false);
-      setError("");
-    } catch (error) {
-      console.error("Error submitting review:", error);
-      setError(
-        error.message || "An unexpected error occurred. Please try again."
-      );
+    } catch (err) {
+      setError(err.message || "An unexpected error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (!song) {
+  if (!song && !error) {
     return (
-      <div className="min-h-screen bg-[#1a1d20] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#1db954]"></div>
+      <div className="min-h-screen bg-[#1a1d20]">
+        <Navbar />
+        <div className="flex items-center justify-center py-32">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#1db954]" />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-[#1a1d20] text-white">
-      <nav className="border-b border-gray-800 p-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <Link href="/" className="text-xl font-bold">
-            SoundScore
-          </Link>
-        </div>
-      </nav>
+      <Navbar />
 
-      <div className="max-w-4xl mx-auto p-5">
-        {/* Song Details Card */}
-        <div className="bg-gray-800 rounded-xl shadow-xl p-8 mb-8">
-          <div className="flex flex-col md:flex-row gap-8">
-            <img
-              src={song.albumArt}
-              alt={song.title}
-              className="w-48 h-48 md:w-64 md:h-64 rounded-xl shadow-lg object-cover hover:scale-105 transition-transform duration-300"
-            />
-            <div className="flex-1">
-              <h1 className="text-4xl font-bold mb-3 text-white">
-                {song.title}
-              </h1>
-              <p className="text-2xl text-gray-300 mb-4">{song.artist}</p>
-              <p className="text-lg text-gray-400 mb-6">{song.album}</p>
-              <div className="bg-gray-700 p-4 rounded-xl">
-                {song.audioUrl ? (
-                  <audio
-                    controls
-                    className="w-full focus:outline-none"
-                    preload="auto"
-                    onError={(e) =>
-                      console.error("Audio error:", e.target.error)
-                    }
-                  >
-                    <source src={song.audioUrl} type="audio/mpeg" />
-                    Your browser does not support the audio element.
-                  </audio>
-                ) : (
-                  <p className="text-gray-400 text-center">
-                    Preview not available
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+        {error && !song && (
+          <p className="text-red-400 text-center">{error}</p>
+        )}
 
-        {/* Reviews Section */}
-        <div className="bg-gray-800 rounded-xl shadow-xl p-8">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-white">
-              Reviews {reviews.length > 0 && `(${reviews.length})`}
-            </h2>
-            {user ? (
-              <button
-                onClick={() => {
-                  setIsFormVisible(!isFormVisible);
-                  setError("");
-                }}
-                className="px-6 py-2 bg-[#1db954] text-white rounded-xl hover:bg-[#169c46] transition-all duration-200 font-medium"
-              >
-                {isFormVisible ? "Cancel Review" : "Write a Review"}
-              </button>
-            ) : (
-              <Link
-                href="/login/signup"
-                className="text-[#1db954] hover:text-[#1aa34a]"
-              >
-                Sign up
-              </Link>
-            )}
-          </div>
-
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-xl mb-6">
-              {error}
-            </div>
-          )}
-
-          {isFormVisible && (
-            <form onSubmit={handleSubmitReview} className="space-y-6 mb-8">
-              <div>
-                <label className="block mb-3 text-lg font-medium text-gray-300">
-                  Rating (0-10)
-                </label>
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1 h-3 bg-gray-700 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-[#1db954] transition-all duration-200"
-                        style={{ width: `${(rating / 10) * 100}%` }}
-                      />
-                    </div>
-                    <span className="text-2xl font-bold text-white min-w-[3rem] text-center">
-                      {rating}
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="10"
-                    step="1"
-                    value={rating}
-                    onChange={(e) => setRating(Number(e.target.value))}
-                    className="w-full accent-[#1db954] cursor-pointer"
+        {song && (
+          <>
+            <div className="bg-gray-800 rounded-xl p-6 sm:p-8 mb-8 border border-gray-700">
+              <div className="flex flex-col md:flex-row gap-8">
+                {song.albumArt && (
+                  <img
+                    src={song.albumArt}
+                    alt={song.title}
+                    className="w-48 h-48 md:w-56 md:h-56 rounded-xl object-cover mx-auto md:mx-0"
                   />
+                )}
+                <div className="flex-1 text-center md:text-left">
+                  <h1 className="text-3xl sm:text-4xl font-bold mb-2">
+                    {song.title}
+                  </h1>
+                  <p className="text-xl text-gray-300 mb-1">{song.artist}</p>
+                  <p className="text-gray-500 mb-4">{song.album}</p>
+                  {averageRating != null && (
+                    <p className="text-[#1db954] font-semibold mb-4">
+                      Community score: {averageRating.toFixed(1)}/10
+                      <span className="text-gray-500 font-normal">
+                        {" "}
+                        ({reviews.length} review
+                        {reviews.length === 1 ? "" : "s"})
+                      </span>
+                    </p>
+                  )}
+                  <div className="bg-gray-700/50 p-4 rounded-xl">
+                    {song.audioUrl ? (
+                      <audio controls className="w-full" preload="metadata">
+                        <source src={song.audioUrl} type="audio/mpeg" />
+                      </audio>
+                    ) : (
+                      <p className="text-gray-400 text-sm">
+                        Preview not available
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
-              <div>
-                <label className="block mb-3 text-lg font-medium text-gray-300">
-                  Comment
-                </label>
-                <textarea
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  className="w-full p-4 bg-gray-700 border border-gray-600 rounded-xl text-white focus:ring-2 focus:ring-[#1db954] focus:border-transparent transition-all duration-200"
-                  rows="4"
-                  placeholder="Share your thoughts about this song..."
-                  disabled={isSubmitting}
-                />
-              </div>
-              <button
-                type="submit"
-                className={`px-8 py-3 bg-[#1db954] text-white rounded-xl hover:bg-[#169c46] transition-all duration-200 font-medium text-lg shadow-md hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed`}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Submitting..." : "Submit Review"}
-              </button>
-            </form>
-          )}
+            </div>
 
-          {/* Reviews List */}
-          <div className="space-y-6 divide-y divide-gray-700">
-            {reviews.length === 0 ? (
-              <p className="text-gray-400 text-center py-8">
-                No reviews yet. Be the first to review this song!
-              </p>
-            ) : (
-              reviews.map((review) => (
-                <div
-                  key={`${review.user_id}-${review.song_id}`}
-                  className="pt-6"
-                >
-                  <div className="flex items-center mb-2">
-                    <span className="text-gray-400 mr-2">Rating:</span>
-                    <div className="flex items-center">
-                      <div className="flex-1 max-w-[200px] h-2 bg-gray-700 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-[#1db954]"
-                          style={{ width: `${(review.rating / 10) * 100}%` }}
-                        />
-                      </div>
-                      <span className="text-lg font-bold text-white">
-                        {review.rating}/10
+            <div className="bg-gray-800 rounded-xl p-6 sm:p-8 border border-gray-700">
+              <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+                <h2 className="text-2xl font-bold">
+                  Reviews {reviews.length > 0 && `(${reviews.length})`}
+                </h2>
+                {user ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsFormVisible(!isFormVisible);
+                      setError("");
+                    }}
+                    className="px-6 py-2 bg-[#1db954] rounded-lg hover:bg-[#169c46] font-medium transition-colors"
+                  >
+                    {isFormVisible ? "Cancel" : "Write a review"}
+                  </button>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="text-[#1db954] hover:underline font-medium"
+                  >
+                    Sign in to review
+                  </Link>
+                )}
+              </div>
+
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/50 text-red-400 p-4 rounded-lg mb-6">
+                  {error}
+                </div>
+              )}
+
+              {isFormVisible && (
+                <form onSubmit={handleSubmitReview} className="space-y-6 mb-8">
+                  <div>
+                    <label className="block mb-2 font-medium text-gray-300">
+                      Rating (0–10)
+                    </label>
+                    <div className="flex items-center gap-4">
+                      <input
+                        type="range"
+                        min="0"
+                        max="10"
+                        step="1"
+                        value={rating}
+                        onChange={(e) => setRating(Number(e.target.value))}
+                        className="flex-1 accent-[#1db954]"
+                      />
+                      <span className="text-2xl font-bold w-12 text-center">
+                        {rating}
                       </span>
                     </div>
                   </div>
-                  <p className="text-gray-300">{review.review_body}</p>
-                  <div className="mt-2 text-sm text-gray-500">
-                    By {review.user_id} •{" "}
-                    {new Date(review.review_date).toLocaleDateString()}
+                  <div>
+                    <label className="block mb-2 font-medium text-gray-300">
+                      Comment
+                    </label>
+                    <textarea
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      className="w-full p-4 bg-gray-700 border border-gray-600 rounded-xl text-white focus:ring-2 focus:ring-[#1db954] focus:outline-none"
+                      rows={4}
+                      placeholder="Share your thoughts..."
+                      disabled={isSubmitting}
+                    />
                   </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-8 py-3 bg-[#1db954] rounded-xl font-medium hover:bg-[#169c46] disabled:opacity-50"
+                  >
+                    {isSubmitting ? "Submitting..." : "Submit review"}
+                  </button>
+                </form>
+              )}
+
+              <div className="space-y-6 divide-y divide-gray-700">
+                {reviews.length === 0 ? (
+                  <p className="text-gray-400 text-center py-8">
+                    No reviews yet. Be the first!
+                  </p>
+                ) : (
+                  reviews.map((review) => (
+                    <article
+                      key={`${review.user_id}-${review.song_id}`}
+                      className="pt-6 first:pt-0"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium text-white">
+                          {review.display_name}
+                        </span>
+                        <span className="text-[#1db954] font-bold">
+                          {review.rating}/10
+                        </span>
+                      </div>
+                      <p className="text-gray-300">{review.review_body}</p>
+                      <p className="mt-2 text-sm text-gray-500">
+                        {new Date(review.review_date).toLocaleDateString()}
+                      </p>
+                    </article>
+                  ))
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

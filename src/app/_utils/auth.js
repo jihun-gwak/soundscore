@@ -46,6 +46,11 @@ export const AuthContextProvider = ({ children }) => {
     return signOut(auth);
   }
 
+  async function getIdToken() {
+    if (!auth.currentUser) return null;
+    return auth.currentUser.getIdToken();
+  }
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
@@ -65,6 +70,7 @@ export const AuthContextProvider = ({ children }) => {
     emailSignIn,
     emailSignUp,
     firebaseSignOut,
+    getIdToken,
   };
 
   return (

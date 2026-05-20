@@ -1,8 +1,10 @@
 "use client";
+
 import Link from "next/link";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useUserAuth } from "../../_utils/auth";
 import { useRouter } from "next/navigation";
+import Navbar from "@/components/Navbar";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -20,20 +22,21 @@ export default function SignUpPage() {
       return;
     }
 
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
     try {
       setError("");
-      // First, create the Firebase account
       await emailSignUp(email, password);
 
-      // Then create user record in Neon database
       const response = await fetch("/api/users", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: email,
-          display_name: email.split("@")[0], // Using part before @ as display name
+          email,
+          display_name: email.split("@")[0],
         }),
       });
 
@@ -42,93 +45,60 @@ export default function SignUpPage() {
       }
 
       router.push("/profile");
-    } catch (error) {
-      setError("Failed to create account. Email might be already in use.");
-      console.log(error);
+    } catch {
+      setError("Could not create account. This email may already be in use.");
     }
   }
 
   return (
-    <main className="min-h-screen bg-[#1a1d20] flex items-center justify-center px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-gray-800 p-8 rounded-xl shadow-lg">
-        <div>
-          <h2 className="text-center text-3xl font-bold text-white">
-            Create your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-400">
+    <div className="min-h-screen bg-[#1a1d20]">
+      <Navbar />
+      <main className="flex items-center justify-center px-4 py-16">
+        <div className="max-w-md w-full bg-gray-800 p-8 rounded-xl border border-gray-700">
+          <h2 className="text-center text-2xl font-bold mb-2">Create account</h2>
+          <p className="text-center text-sm text-gray-400 mb-8">
             Already have an account?{" "}
-            <Link
-              href="/login"
-              className="font-medium text-blue-500 hover:text-blue-400"
-            >
-              Sign in instead
+            <Link href="/login" className="text-[#1db954] hover:underline">
+              Sign in
             </Link>
           </p>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSignUp}>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
-                placeholder="Email address"
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
-                placeholder="Password"
-              />
-            </div>
-            <div>
-              <label htmlFor="confirm-password" className="sr-only">
-                Confirm Password
-              </label>
-              <input
-                id="confirm-password"
-                name="confirm-password"
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
-                placeholder="Confirm Password"
-              />
-            </div>
-          </div>
-
-          {error && (
-            <div className="text-red-500 text-sm text-center">{error}</div>
-          )}
-
-          <div>
+          <form onSubmit={handleSignUp} className="space-y-4">
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email"
+              className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-500 focus:ring-2 focus:ring-[#1db954] focus:outline-none"
+            />
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-500 focus:ring-2 focus:ring-[#1db954] focus:outline-none"
+            />
+            <input
+              type="password"
+              required
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm password"
+              className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-500 focus:ring-2 focus:ring-[#1db954] focus:outline-none"
+            />
+            {error && (
+              <p className="text-red-400 text-sm text-center">{error}</p>
+            )}
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300"
+              className="w-full py-3 bg-[#1db954] hover:bg-[#1aa34a] text-white font-semibold rounded-lg transition-colors"
             >
-              Create Account
+              Create account
             </button>
-          </div>
-        </form>
-      </div>
-    </main>
+          </form>
+        </div>
+      </main>
+    </div>
   );
 }

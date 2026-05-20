@@ -137,14 +137,14 @@ HTTP examples for local testing live in [`src/app/api/test.http`](src/app/api/te
 
 ## Deployment
 
-Deploy to [Vercel](https://vercel.com) or any Node host that supports Next.js:
+See **[DEPLOY.md](DEPLOY.md)** for a step-by-step Vercel + Neon + Firebase guide.
 
-1. Push the repo to GitHub.
-2. Import the project in Vercel.
-3. Add the same environment variables as in `.env.local`.
-4. Deploy.
+Quick checklist:
 
-Ensure Firebase authorized domains include your production URL.
+1. Push to GitHub and import on [Vercel](https://vercel.com).
+2. Add all env vars from `.env.example` in Vercel project settings.
+3. Run `db/schema.sql` in Neon.
+4. Add your Vercel URL to Firebase **Authorized domains**.
 
 ## Security notes
 

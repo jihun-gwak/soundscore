@@ -5,6 +5,7 @@ import { useUserAuth } from "../_utils/auth";
 import { getSongDetails } from "@/services/musicApi";
 import Link from "next/link";
 import Image from "next/image";
+import Navbar from "@/components/Navbar";
 
 export default function ProfilePage() {
   const { user } = useUserAuth();
@@ -132,18 +133,12 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-[#1a1d20] text-white">
-      <nav className="border-b border-gray-800 p-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <Link href="/" className="text-xl font-bold">
-            SoundScore
-          </Link>
-        </div>
-      </nav>
+      <Navbar />
 
-      <main className="max-w-4xl mx-auto p-4">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">
-            {userProfile.displayName}'s Profile
+            {userProfile.displayName}&apos;s Profile
           </h1>
           <p className="text-gray-400">Member since {userProfile.joinDate}</p>
           <p className="text-gray-400">
@@ -162,7 +157,7 @@ export default function ProfilePage() {
         ) : reviews.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-gray-400">
-              You haven't written any reviews yet.
+              You haven&apos;t written any reviews yet.
             </p>
           </div>
         ) : (
@@ -183,7 +178,12 @@ export default function ProfilePage() {
                     />
                   )}
                   <div>
-                    <h3 className="text-xl font-bold">{review.song?.title}</h3>
+                    <Link
+                      href={`/song/${review.song_id}`}
+                      className="text-xl font-bold hover:text-[#1db954] transition-colors"
+                    >
+                      {review.song?.title}
+                    </Link>
                     <p className="text-gray-400">{review.song?.singers}</p>
                   </div>
                 </div>
