@@ -7,7 +7,7 @@ import {
   signOut,
   onAuthStateChanged,
 } from "firebase/auth";
-import { auth } from "./firebase";
+import { getAuthInstance } from "./firebase";
 
 const AuthContext = createContext();
 
@@ -15,6 +15,7 @@ export const AuthContextProvider = ({ children }) => {
   const [user, setUser] = useState();
   const [dbUser, setDbUser] = useState();
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState(null);
 
   async function fetchDbUser(email) {
     try {
@@ -24,7 +25,6 @@ export const AuthContextProvider = ({ children }) => {
         const data = await response.json();
         setDbUser(data);
       } else {
-        console.error("Failed to fetch database user");
         setDbUser(null);
       }
     } catch (error) {
@@ -33,40 +33,65 @@ export const AuthContextProvider = ({ children }) => {
     }
   }
 
+  function requireAuth() {
+    const auth = getAuthInstance();
+    if (!auth) {
+      throw new Error(
+        authError ||
+          "Firebase is not configured. Check NEXT_PUBLIC_FIREBASE_* environment variables."
+      );
+    }
+    return auth;
+  }
+
   function emailSignIn(email, password) {
-    return signInWithEmailAndPassword(auth, email, password);
+    return signInWithEmailAndPassword(requireAuth(), email, password);
   }
 
   function emailSignUp(email, password) {
-    return createUserWithEmailAndPassword(auth, email, password);
+    return createUserWithEmailAndPassword(requireAuth(), email, password);
   }
 
   function firebaseSignOut() {
     setDbUser(null);
+    const auth = getAuthInstance();
+    if (!auth) return Promise.resolve();
     return signOut(auth);
   }
 
   async function getIdToken() {
-    if (!auth.currentUser) return null;
+    const auth = getAuthInstance();
+    if (!auth?.currentUser) return null;
     return auth.currentUser.getIdToken();
   }
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      if (user) {
-        fetchDbUser(user.email);
+    const auth = getAuthInstance();
+    if (!auth) {
+      setAuthError(
+        "Firebase is not configured. Add NEXT_PUBLIC_FIREBASE_* variables in Vercel."
+      );
+      setLoading(false);
+      return;
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      if (firebaseUser) {
+        fetchDbUser(firebaseUser.email);
       } else {
         setDbUser(null);
       }
       setLoading(false);
     });
+
     return unsubscribe;
   }, []);
 
   const value = {
     user,
     dbUser,
+    authError,
     emailSignIn,
     emailSignUp,
     firebaseSignOut,

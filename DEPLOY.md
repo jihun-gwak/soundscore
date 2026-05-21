@@ -31,6 +31,10 @@ Optional: `RAPIDAPI_HOST` (defaults to `deezerdevs-deezer.p.rapidapi.com`).
 
 Copy from `.env.example` — never paste secrets in the repo.
 
+**Important:** Add variables for **Production**, **Preview**, and **Development** scopes. A missing `NEXT_PUBLIC_FIREBASE_API_KEY` causes build failures or broken sign-in.
+
+After adding or changing env vars, click **Redeploy** so the build picks them up.
+
 ## 4. Database
 
 In the Neon SQL editor, run the script in [`db/schema.sql`](db/schema.sql).
