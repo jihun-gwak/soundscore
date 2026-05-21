@@ -25,9 +25,7 @@ In **Project Settings → Environment Variables**, add these for **Production**,
 | `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Same |
 | `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Same |
 | `NEXT_PUBLIC_FIREBASE_APP_ID` | Same |
-| `RAPIDAPI_KEY` | [RapidAPI](https://rapidapi.com) → Deezer API subscription |
-
-Optional: `RAPIDAPI_HOST` (defaults to `deezerdevs-deezer.p.rapidapi.com`).
+Music search uses the free [Deezer public API](https://developers.deezer.com/api) — **no extra API key** needed.
 
 Copy from `.env.example` — never paste secrets in the repo.
 
@@ -67,7 +65,7 @@ Vercel → **Settings** → **Domains** → add your domain, then add that domai
 
 | Issue | Fix |
 |-------|-----|
-| Music search fails | Check `RAPIDAPI_KEY` is set on Vercel and the RapidAPI subscription is active |
+| Music search fails | Deezer API may be rate-limited; retry later or check Vercel function logs |
 | Auth errors | Confirm all `NEXT_PUBLIC_FIREBASE_*` vars match Firebase web app config |
 | Reviews not saving | Verify `DATABASE_URL` and that `db/schema.sql` was applied in Neon |
 | Build fails locally | Run `npm run build`; fix any ESLint errors |

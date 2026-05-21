@@ -1,7 +1,8 @@
 CREATE TABLE IF NOT EXISTS users (
   user_id SERIAL PRIMARY KEY,
-  email VARCHAR(100) NOT NULL UNIQUE,
-  display_name VARCHAR(100) NOT NULL
+  email VARCHAR(100) NOT NULL,
+  display_name VARCHAR(100) NOT NULL,
+  CONSTRAINT users_email_unique UNIQUE (email)
 );
 
 CREATE TABLE IF NOT EXISTS songs (

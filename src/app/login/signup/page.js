@@ -2,17 +2,18 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useUserAuth } from "../../_utils/auth";
+import { useUserAuth, getFirebaseErrorMessage } from "../../_utils/auth";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 
 export default function SignUpPage() {
   const router = useRouter();
-  const { emailSignUp } = useUserAuth();
+  const { emailSignUp, authError, initializing } = useUserAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   async function handleSignUp(e) {
     e.preventDefault();
@@ -27,27 +28,25 @@ export default function SignUpPage() {
       return;
     }
 
+    setError("");
+    setSubmitting(true);
+
     try {
-      setError("");
-      await emailSignUp(email, password);
-
-      const response = await fetch("/api/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          display_name: email.split("@")[0],
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create user record");
-      }
-
+      await emailSignUp(email.trim(), password);
       router.push("/profile");
-    } catch {
-      setError("Could not create account. This email may already be in use.");
+    } catch (err) {
+      setError(getFirebaseErrorMessage(err));
+    } finally {
+      setSubmitting(false);
     }
+  }
+
+  if (initializing) {
+    return (
+      <div className="min-h-screen bg-[#1a1d20] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#1db954]" />
+      </div>
+    );
   }
 
   return (
@@ -62,10 +61,16 @@ export default function SignUpPage() {
               Sign in
             </Link>
           </p>
+
+          {authError && (
+            <p className="text-amber-400 text-sm text-center mb-4">{authError}</p>
+          )}
+
           <form onSubmit={handleSignUp} className="space-y-4">
             <input
               type="email"
               required
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email"
@@ -74,14 +79,16 @@ export default function SignUpPage() {
             <input
               type="password"
               required
+              autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
+              placeholder="Password (min 6 characters)"
               className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-500 focus:ring-2 focus:ring-[#1db954] focus:outline-none"
             />
             <input
               type="password"
               required
+              autoComplete="new-password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Confirm password"
@@ -92,9 +99,10 @@ export default function SignUpPage() {
             )}
             <button
               type="submit"
-              className="w-full py-3 bg-[#1db954] hover:bg-[#1aa34a] text-white font-semibold rounded-lg transition-colors"
+              disabled={submitting || !!authError}
+              className="w-full py-3 bg-[#1db954] hover:bg-[#1aa34a] text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
             >
-              Create account
+              {submitting ? "Creating account..." : "Create account"}
             </button>
           </form>
         </div>

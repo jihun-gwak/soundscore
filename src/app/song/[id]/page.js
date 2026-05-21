@@ -17,7 +17,7 @@ export default function SongDetails() {
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const { user, dbUser, getIdToken } = useUserAuth();
+  const { user, dbUser, initializing, getIdToken } = useUserAuth();
 
   const fetchReviews = async () => {
     const response = await fetch(`/api/reviews/song/${id}`);
@@ -40,7 +40,7 @@ export default function SongDetails() {
         });
       } catch (err) {
         console.error("Error fetching song details:", err);
-        setError("Failed to load song details");
+        setError(err.message || "Failed to load song details");
       }
     };
 
@@ -53,8 +53,13 @@ export default function SongDetails() {
 
   const handleSubmitReview = async (e) => {
     e.preventDefault();
-    if (!user || !dbUser) {
+    if (!user) {
       setError("Please sign in to write a review");
+      return;
+    }
+
+    if (!dbUser?.user_id) {
+      setError("Account still syncing. Wait a moment and try again.");
       return;
     }
 

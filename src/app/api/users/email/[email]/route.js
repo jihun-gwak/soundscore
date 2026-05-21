@@ -1,25 +1,20 @@
-import {neon} from "@neondatabase/serverless";
+import { neon } from "@neondatabase/serverless";
 
-export async function GET(request, {params}) {
-    const {email} = await params;
-    const dbUrl = process.env.DATABASE_URL || "";
-    const sql = neon(dbUrl);
+export async function GET(_request, { params }) {
+  const { email: rawEmail } = await params;
+  const email = decodeURIComponent(rawEmail);
+  const dbUrl = process.env.DATABASE_URL || "";
 
-    const response = await sql`SELECT * FROM users WHERE email = ${email}`;
+  if (!dbUrl) {
+    return Response.json({ error: "Database not configured" }, { status: 500 });
+  }
 
-    if (response.length === 0) {
-        return new Response(JSON.stringify({ error: "User not found" }), {
-            status: 404,
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-    }
+  const sql = neon(dbUrl);
+  const response = await sql`SELECT * FROM users WHERE email = ${email}`;
 
-    return new Response(JSON.stringify(response[0]), {
-        status: 200,
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    });
+  if (response.length === 0) {
+    return Response.json({ error: "User not found" }, { status: 404 });
+  }
+
+  return Response.json(response[0]);
 }

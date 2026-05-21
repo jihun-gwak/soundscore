@@ -2,44 +2,40 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useUserAuth } from "../_utils/auth";
+import { useUserAuth, getFirebaseErrorMessage } from "../_utils/auth";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 
 export default function SignInPage() {
   const router = useRouter();
-  const { user, emailSignIn, firebaseSignOut } = useUserAuth();
+  const { user, authError, emailSignIn, firebaseSignOut, initializing } =
+    useUserAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   async function handleSignIn(e) {
     e.preventDefault();
+    setError("");
+    setSubmitting(true);
+
     try {
-      setError("");
-      await emailSignIn(email, password);
-
-      const encodedEmail = encodeURIComponent(email);
-      const checkUser = await fetch(`/api/users/email/${encodedEmail}`);
-
-      if (checkUser.status === 404) {
-        const createResponse = await fetch("/api/users", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email,
-            display_name: email.split("@")[0],
-          }),
-        });
-        if (!createResponse.ok) {
-          throw new Error("Failed to create user record");
-        }
-      }
-
+      await emailSignIn(email.trim(), password);
       router.push("/profile");
-    } catch {
-      setError("Failed to sign in. Check your email and password.");
+    } catch (err) {
+      setError(getFirebaseErrorMessage(err));
+    } finally {
+      setSubmitting(false);
     }
+  }
+
+  if (initializing) {
+    return (
+      <div className="min-h-screen bg-[#1a1d20] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#1db954]" />
+      </div>
+    );
   }
 
   if (user) {
@@ -82,10 +78,16 @@ export default function SignInPage() {
               create an account
             </Link>
           </p>
+
+          {authError && (
+            <p className="text-amber-400 text-sm text-center mb-4">{authError}</p>
+          )}
+
           <form onSubmit={handleSignIn} className="space-y-4">
             <input
               type="email"
               required
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email"
@@ -94,6 +96,7 @@ export default function SignInPage() {
             <input
               type="password"
               required
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
@@ -104,9 +107,10 @@ export default function SignInPage() {
             )}
             <button
               type="submit"
-              className="w-full py-3 bg-[#1db954] hover:bg-[#1aa34a] text-white font-semibold rounded-lg transition-colors"
+              disabled={submitting || !!authError}
+              className="w-full py-3 bg-[#1db954] hover:bg-[#1aa34a] text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
             >
-              Sign in
+              {submitting ? "Signing in..." : "Sign in"}
             </button>
           </form>
         </div>

@@ -19,14 +19,14 @@ A music discovery and review web app built with Next.js. Search tracks via the D
 | Auth | [Firebase Authentication](https://firebase.google.com/docs/auth) (email/password) |
 | Database | [Neon](https://neon.tech) serverless PostgreSQL (`@neondatabase/serverless`) |
 | Validation | [Zod](https://zod.dev) |
-| Music data | Deezer API via [RapidAPI](https://rapidapi.com) |
+| Music data | [Deezer public API](https://api.deezer.com) (free, no key) |
 
 ## Prerequisites
 
 - Node.js 18+
 - A [Firebase](https://console.firebase.google.com) project with Email/Password auth enabled
 - A [Neon](https://neon.tech) database
-- A [RapidAPI](https://rapidapi.com) subscription to the Deezer API host (`deezerdevs-deezer.p.rapidapi.com`)
+- No music API key required (uses the free [Deezer public API](https://developers.deezer.com/api))
 
 ## Getting started
 
@@ -50,8 +50,6 @@ cp .env.example .env.local
 |----------|-------------|
 | `DATABASE_URL` | Neon PostgreSQL connection string (server-only) |
 | `NEXT_PUBLIC_FIREBASE_*` | Firebase web app config from the Firebase console |
-| `RAPIDAPI_KEY` | RapidAPI key (server-only; proxied through `/api/music`) |
-| `RAPIDAPI_HOST` | Optional; defaults to `deezerdevs-deezer.p.rapidapi.com` |
 
 Never commit `.env.local` or real API keys to git.
 
@@ -148,7 +146,7 @@ Quick checklist:
 
 ## Security notes
 
-- Music API keys are called only from server routes (`/api/music/*`), not from the browser.
+- Deezer requests are proxied through server routes (`/api/music/*`), not called directly from the browser.
 - Review POST endpoints do not verify Firebase sessions today; consider adding middleware or server-side token checks before production use.
 - Rotate any API key that was previously committed to git history.
 

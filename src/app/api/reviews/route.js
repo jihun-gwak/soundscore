@@ -24,12 +24,21 @@ export async function POST(request) {
       return Response.json({ error: "Invalid review data" }, { status: 400 });
     }
 
-    const dbUsers = await sql`
+    let dbUsers = await sql`
       SELECT user_id FROM users WHERE email = ${authUser.email}
     `;
+
     if (dbUsers.length === 0) {
-      return Response.json({ error: "User not found" }, { status: 404 });
+      const displayName = authUser.email.split("@")[0];
+      const created = await sql`
+        INSERT INTO users (email, display_name)
+        VALUES (${authUser.email}, ${displayName})
+        ON CONFLICT (email) DO UPDATE SET display_name = EXCLUDED.display_name
+        RETURNING user_id
+      `;
+      dbUsers = created;
     }
+
     const user_id = dbUsers[0].user_id;
 
     const songExists = await sql`
