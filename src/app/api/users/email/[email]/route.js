@@ -1,20 +1,24 @@
-import { neon } from "@neondatabase/serverless";
+import {
+  ApiError,
+  getSql,
+  jsonOk,
+  withHandler,
+} from "@/app/_utils/apiResponse";
 
-export async function GET(_request, { params }) {
+export const GET = withHandler(async (_request, { params }) => {
   const { email: rawEmail } = await params;
-  const email = decodeURIComponent(rawEmail);
-  const dbUrl = process.env.DATABASE_URL || "";
-
-  if (!dbUrl) {
-    return Response.json({ error: "Database not configured" }, { status: 500 });
+  if (!rawEmail) {
+    throw new ApiError("Email is required", 400);
   }
 
-  const sql = neon(dbUrl);
+  const email = decodeURIComponent(rawEmail);
+  const sql = getSql();
+
   const response = await sql`SELECT * FROM users WHERE email = ${email}`;
 
   if (response.length === 0) {
-    return Response.json({ error: "User not found" }, { status: 404 });
+    throw new ApiError("User not found", 404);
   }
 
-  return Response.json(response[0]);
-}
+  return jsonOk(response[0]);
+});

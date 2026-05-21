@@ -1,20 +1,13 @@
-import { NextResponse } from "next/server";
+import { ApiError, jsonOk, withHandler } from "@/app/_utils/apiResponse";
 import { searchDeezerTracks } from "@/services/deezer";
 
-export async function GET(request) {
+export const GET = withHandler(async (request) => {
   const query = request.nextUrl.searchParams.get("q");
 
   if (!query?.trim()) {
-    return NextResponse.json({ error: "Missing search query" }, { status: 400 });
+    throw new ApiError("Missing search query", 400);
   }
 
-  try {
-    const results = await searchDeezerTracks(query);
-    return NextResponse.json(results);
-  } catch (error) {
-    return NextResponse.json(
-      { error: error.message || "Music search failed" },
-      { status: 502 }
-    );
-  }
-}
+  const results = await searchDeezerTracks(query);
+  return jsonOk(results);
+});

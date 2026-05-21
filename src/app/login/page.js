@@ -5,6 +5,8 @@ import { useState } from "react";
 import { useUserAuth, getFirebaseErrorMessage } from "../_utils/auth";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import ErrorAlert from "@/components/ErrorAlert";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -19,7 +21,6 @@ export default function SignInPage() {
     e.preventDefault();
     setError("");
     setSubmitting(true);
-
     try {
       await emailSignIn(email.trim(), password);
       router.push("/profile");
@@ -32,89 +33,91 @@ export default function SignInPage() {
 
   if (initializing) {
     return (
-      <div className="min-h-screen bg-[#1a1d20] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#1db954]" />
-      </div>
-    );
-  }
-
-  if (user) {
-    return (
-      <div className="min-h-screen bg-[#1a1d20]">
-        <Navbar />
-        <main className="flex items-center justify-center px-4 py-16">
-          <div className="max-w-md w-full bg-gray-800 p-8 rounded-xl border border-gray-700 text-center">
-            <h1 className="text-2xl font-bold mb-4">You&apos;re signed in</h1>
-            <div className="flex flex-col gap-3">
-              <Link
-                href="/profile"
-                className="bg-[#1db954] hover:bg-[#1aa34a] text-white font-semibold py-3 rounded-lg transition-colors"
-              >
-                Go to profile
-              </Link>
-              <button
-                type="button"
-                onClick={() => firebaseSignOut().then(() => router.push("/"))}
-                className="text-gray-400 hover:text-white py-2"
-              >
-                Sign out
-              </button>
-            </div>
-          </div>
-        </main>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-accent border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1d20]">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex items-center justify-center px-4 py-16">
-        <div className="max-w-md w-full bg-gray-800 p-8 rounded-xl border border-gray-700">
-          <h2 className="text-center text-2xl font-bold mb-2">Sign in</h2>
-          <p className="text-center text-sm text-gray-400 mb-8">
-            Or{" "}
-            <Link href="/login/signup" className="text-[#1db954] hover:underline">
-              create an account
-            </Link>
-          </p>
+      <main className="flex-1 flex items-center justify-center px-4 py-12">
+        {user ? (
+          <div className="glass-card p-10 text-center max-w-md w-full animate-slide-up">
+            <span className="text-5xl mb-4 block">✓</span>
+            <h1 className="text-2xl font-bold mb-4">Welcome back!</h1>
+            <div className="flex flex-col gap-3">
+              <Link href="/profile" className="btn-primary">
+                Go to profile
+              </Link>
+              <button
+                type="button"
+                onClick={() => firebaseSignOut().then(() => router.push("/"))}
+                className="btn-ghost"
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="w-full max-w-md animate-slide-up">
+            <div className="text-center mb-8">
+              <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-emerald-600 text-2xl mb-4 shadow-lg shadow-accent/30">
+                ♪
+              </span>
+              <h2 className="text-2xl font-bold">Sign in</h2>
+              <p className="text-gray-500 text-sm mt-2">
+                New here?{" "}
+                <Link href="/login/signup" className="text-accent hover:underline">
+                  Create an account
+                </Link>
+              </p>
+            </div>
 
-          {authError && (
-            <p className="text-amber-400 text-sm text-center mb-4">{authError}</p>
-          )}
-
-          <form onSubmit={handleSignIn} className="space-y-4">
-            <input
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email"
-              className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-500 focus:ring-2 focus:ring-[#1db954] focus:outline-none"
-            />
-            <input
-              type="password"
-              required
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-500 focus:ring-2 focus:ring-[#1db954] focus:outline-none"
-            />
-            {error && (
-              <p className="text-red-400 text-sm text-center">{error}</p>
-            )}
-            <button
-              type="submit"
-              disabled={submitting || !!authError}
-              className="w-full py-3 bg-[#1db954] hover:bg-[#1aa34a] text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
-            >
-              {submitting ? "Signing in..." : "Sign in"}
-            </button>
-          </form>
-        </div>
+            <div className="glass-card p-8">
+              {authError && (
+                <ErrorAlert message={authError} variant="warning" className="mb-6" />
+              )}
+              <form onSubmit={handleSignIn} className="space-y-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1.5">Email</label>
+                  <input
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="input-field"
+                    placeholder="you@example.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1.5">Password</label>
+                  <input
+                    type="password"
+                    required
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="input-field"
+                    placeholder="••••••••"
+                  />
+                </div>
+                {error && <ErrorAlert message={error} />}
+                <button
+                  type="submit"
+                  disabled={submitting || !!authError}
+                  className="btn-primary w-full"
+                >
+                  {submitting ? "Signing in..." : "Sign in"}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
       </main>
+      <Footer />
     </div>
   );
 }

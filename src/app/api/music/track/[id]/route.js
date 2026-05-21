@@ -1,20 +1,16 @@
-import { NextResponse } from "next/server";
+import { ApiError, jsonOk, withHandler } from "@/app/_utils/apiResponse";
 import { fetchDeezerTrack } from "@/services/deezer";
 
-export async function GET(_request, { params }) {
+export const GET = withHandler(async (_request, { params }) => {
   const { id } = await params;
-
   if (!id) {
-    return NextResponse.json({ error: "Missing track id" }, { status: 400 });
+    throw new ApiError("Missing track id", 400);
   }
 
   try {
     const track = await fetchDeezerTrack(id);
-    return NextResponse.json(track);
+    return jsonOk(track);
   } catch (error) {
-    return NextResponse.json(
-      { error: error.message || "Failed to fetch track" },
-      { status: 404 }
-    );
+    throw new ApiError(error.message || "Track not found", 404);
   }
-}
+});

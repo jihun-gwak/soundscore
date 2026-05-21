@@ -1,5 +1,12 @@
+import { Outfit } from "next/font/google";
 import "./globals.css";
 import { AuthContextProvider } from "./_utils/auth";
+import { ToastProvider } from "@/components/Toast";
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+});
 
 export const metadata = {
   title: "SoundScore — Rate and review music",
@@ -14,9 +21,11 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-[#1a1d20] text-white antialiased">
-        <AuthContextProvider>{children}</AuthContextProvider>
+    <html lang="en" className={outfit.variable}>
+      <body className="font-sans min-h-screen flex flex-col">
+        <AuthContextProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </AuthContextProvider>
       </body>
     </html>
   );

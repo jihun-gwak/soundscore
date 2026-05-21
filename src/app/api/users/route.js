@@ -1,25 +1,20 @@
 import { z } from "zod";
-import { neon } from "@neondatabase/serverless";
+import {
+  ApiError,
+  getSql,
+  jsonOk,
+  parseJsonBody,
+  withHandler,
+} from "@/app/_utils/apiResponse";
 
-export async function GET() {
-  const dbUrl = process.env.DATABASE_URL || "";
-  const sql = neon(dbUrl);
+export const GET = withHandler(async () => {
+  const sql = getSql();
   const response = await sql`SELECT * FROM users`;
-  return Response.json(response);
-}
+  return jsonOk(response);
+});
 
-export async function POST(request) {
-  const dbUrl = process.env.DATABASE_URL || "";
-  if (!dbUrl) {
-    return Response.json({ error: "Database not configured" }, { status: 500 });
-  }
-
-  let newUser;
-  try {
-    newUser = await request.json();
-  } catch {
-    return Response.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+export const POST = withHandler(async (request) => {
+  const newUser = await parseJsonBody(request);
 
   const newUserSchema = z.object({
     email: z.string().email().max(100),
@@ -28,11 +23,11 @@ export async function POST(request) {
 
   const parsed = newUserSchema.safeParse(newUser);
   if (!parsed.success) {
-    return Response.json({ error: "Invalid user data" }, { status: 400 });
+    throw new ApiError("Invalid user data", 400);
   }
 
   const { email, display_name } = parsed.data;
-  const sql = neon(dbUrl);
+  const sql = getSql();
 
   try {
     const inserted = await sql`
@@ -40,18 +35,16 @@ export async function POST(request) {
       VALUES (${email}, ${display_name})
       RETURNING *
     `;
-    return Response.json(inserted[0], { status: 201 });
+    return jsonOk(inserted[0], 201);
   } catch (error) {
-    // Email already exists — return existing user
     if (error.code === "23505") {
       const existing = await sql`
         SELECT * FROM users WHERE email = ${email}
       `;
       if (existing.length > 0) {
-        return Response.json(existing[0], { status: 200 });
+        return jsonOk(existing[0], 200);
       }
     }
-    console.error("Error creating user:", error);
-    return Response.json({ error: "Failed to create user" }, { status: 500 });
+    throw new ApiError("Failed to create user", 500);
   }
-}
+});

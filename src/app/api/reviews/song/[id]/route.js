@@ -1,10 +1,14 @@
-import { neon } from "@neondatabase/serverless";
+import {
+  getSql,
+  jsonOk,
+  parseNumericId,
+  withHandler,
+} from "@/app/_utils/apiResponse";
 
-export async function GET(_request, { params }) {
+export const GET = withHandler(async (_request, { params }) => {
   const { id } = await params;
-  const idNum = Number(id);
-  const dbUrl = process.env.DATABASE_URL || "";
-  const sql = neon(dbUrl);
+  const songId = parseNumericId(id, "song id");
+  const sql = getSql();
 
   const reviews = await sql`
     SELECT
@@ -17,14 +21,14 @@ export async function GET(_request, { params }) {
       u.display_name
     FROM reviews r
     JOIN users u ON u.user_id = r.user_id
-    WHERE r.song_id = ${idNum}
+    WHERE r.song_id = ${songId}
     ORDER BY r.review_date DESC
   `;
 
-  const avg =
+  const averageRating =
     reviews.length > 0
       ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
       : null;
 
-  return Response.json({ reviews, averageRating: avg, count: reviews.length });
-}
+  return jsonOk({ reviews, averageRating, count: reviews.length });
+});

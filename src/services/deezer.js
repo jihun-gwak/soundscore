@@ -53,3 +53,22 @@ export async function searchDeezerTracks(query, limit = 25) {
       album: track.album?.title ?? "",
     }));
 }
+
+export async function fetchDeezerChart(limit = 12) {
+  const response = await fetch(`${DEEZER_API}/chart/0/tracks?limit=${limit}`, {
+    next: { revalidate: 3600 },
+  });
+  const data = await response.json();
+
+  if (data.error || !response.ok) {
+    throw new Error(data.error?.message || "Failed to load chart");
+  }
+
+  return (data.data ?? []).map((track) => ({
+    id: track.id,
+    title: track.title,
+    singers: track.artist?.name ?? "Unknown artist",
+    image_url: track.album?.cover_medium ?? track.album?.cover ?? null,
+    album: track.album?.title ?? "",
+  }));
+}

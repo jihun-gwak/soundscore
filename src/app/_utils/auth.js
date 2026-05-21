@@ -8,6 +8,7 @@ import {
   onAuthStateChanged,
 } from "firebase/auth";
 import { getAuthInstance } from "./firebase";
+import { fetchJson, ClientApiError } from "@/lib/fetchJson";
 
 const AuthContext = createContext(null);
 
@@ -41,35 +42,26 @@ export const AuthContextProvider = ({ children }) => {
     if (!email) return null;
 
     const encodedEmail = encodeURIComponent(email);
-    const lookup = await fetch(`/api/users/email/${encodedEmail}`);
 
-    if (lookup.ok) {
-      const data = await lookup.json();
+    try {
+      const data = await fetchJson(`/api/users/email/${encodedEmail}`);
       setDbUser(data);
       return data;
-    }
-
-    if (lookup.status === 404) {
-      const create = await fetch("/api/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          display_name: getDisplayName(email, displayName),
-        }),
-      });
-
-      if (!create.ok) {
-        const err = await create.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to create account in database");
+    } catch (err) {
+      if (err instanceof ClientApiError && err.status === 404) {
+        const data = await fetchJson("/api/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            display_name: getDisplayName(email, displayName),
+          }),
+        });
+        setDbUser(data);
+        return data;
       }
-
-      const data = await create.json();
-      setDbUser(data);
-      return data;
+      throw err;
     }
-
-    throw new Error("Failed to load account from database");
   }, []);
 
   function requireAuth() {

@@ -1,30 +1,17 @@
-async function parseError(response, fallback) {
-  try {
-    const data = await response.json();
-    return data.error || fallback;
-  } catch {
-    return fallback;
-  }
-}
+import { fetchJson } from "@/lib/fetchJson";
 
 export async function searchSongs(query) {
-  const response = await fetch(
-    `/api/music/search?q=${encodeURIComponent(query)}`
-  );
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Failed to search songs"));
-  }
-
-  return response.json();
+  return fetchJson(`/api/music/search?q=${encodeURIComponent(query)}`);
 }
 
 export async function getSongDetails(songId) {
-  const response = await fetch(`/api/music/track/${songId}`);
+  return fetchJson(`/api/music/track/${songId}`);
+}
 
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Failed to fetch song details"));
-  }
+export async function getChartTracks(limit = 12) {
+  return fetchJson(`/api/music/chart?limit=${limit}`);
+}
 
-  return response.json();
+export async function getSongReviews(songId) {
+  return fetchJson(`/api/reviews/song/${songId}`);
 }
